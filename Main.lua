@@ -1,17 +1,19 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "ELITE V13 | DEFINITIVE AIM",
-   LoadingTitle = "A Corrigir Motores de Mira...",
-   LoadingSubtitle = "Filtro de Colisão Ignorado",
-   ConfigurationSaving = { Enabled = false }
+   Name = "✠𝕯𝖆𝖓𝖎𝖊𝖑✠", -- Nome atualizado aqui
+   LoadingTitle = "INICIANDO SISTEMA...",
+   LoadingSubtitle = "By Daniel - V13",
+   ConfigurationSaving = { Enabled = false },
+   Image = 104071203297793 
 })
 
--- Variáveis de Controlo
+-- Variáveis de Controle
 local _G = {
     Esp = false,
     Aimbot = false,
-    Distance = false
+    Distance = true,
+    NoClip = false
 }
 
 local Camera = workspace.CurrentCamera
@@ -19,66 +21,90 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 
-local MainTab = Window:CreateTab("Combate & Visual", 4483362458)
+-- Abas
+local MoveTab = Window:CreateTab("Movimentação", 104071203297793)
+local CombatTab = Window:CreateTab("Combate & Visual", 104071203297793)
 
---- FUNÇÃO DE VISIBILIDADE ULTRA-MELHORADA ---
-local function IsVisible(part)
-    if not part or not LocalPlayer.Character then return false end
-    
-    local char = LocalPlayer.Character
-    local origin = Camera.CFrame.Position
-    local destination = part.Position
-    local direction = (destination - origin).Unit * (destination - origin).Magnitude
-    
-    local params = RaycastParams.new()
-    -- Ignora o teu personagem E o personagem do inimigo para o tiro passar
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    params.FilterDescendantsInstances = {char, part.Parent}
-    
-    local result = workspace:Raycast(origin, direction, params)
-    
-    -- Se o raio não bater em NADA (nil), o caminho está livre
-    return result == nil
-end
-
---- INTERFACE ---
-MainTab:CreateToggle({
-   Name = "Visual: X-RAY ESP",
+--- SEÇÃO DE MOVIMENTAÇÃO ---
+MoveTab:CreateToggle({
+   Name = "NoClip (Atravessar Paredes)",
    CurrentValue = false,
-   Callback = function(Value) _G.Esp = Value end,
+   Callback = function(Value) _G.NoClip = Value end,
 })
 
-MainTab:CreateToggle({
-   Name = "Visual: Distância (Studs)",
-   CurrentValue = false,
-   Callback = function(Value) _G.Distance = Value end,
-})
+RunService.Stepped:Connect(function()
+    if _G.NoClip and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
+        end
+    end
+end)
 
-MainTab:CreateToggle({
-   Name = "Combate: Grudar Mira (Head-Lock)",
+--- SEÇÃO DE COMBATE E VISUAL ---
+CombatTab:CreateToggle({
+   Name = "Grudar na Cabeça (Agressivo)",
    CurrentValue = false,
    Callback = function(Value) _G.Aimbot = Value end,
 })
 
---- LÓGICA DE VISUAIS ---
-RunService.Heartbeat:Connect(function()
+CombatTab:CreateToggle({
+   Name = "X-RAY ESP (Bordas Verdes)",
+   CurrentValue = false,
+   Callback = function(Value) _G.Esp = Value end,
+})
+
+CombatTab:CreateToggle({
+   Name = "Mostrar Distância [M]",
+   CurrentValue = true,
+   Callback = function(Value) _G.Distance = Value end,
+})
+
+--- BUSCA DE ALVO ---
+local function GetClosestTarget()
+    local target = nil
+    local shortestDistance = math.huge
+    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            local head = player.Character.Head
+            local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
+            if onScreen then
+                local screenDist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
+                if screenDist < shortestDistance then
+                    target = head
+                    shortestDistance = screenDist
+                end
+            end
+        end
+    end
+    return target
+end
+
+--- LOOP DE RENDERIZAÇÃO ---
+RunService.RenderStepped:Connect(function()
+    if _G.Aimbot then
+        local target = GetClosestTarget()
+        if target then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
+        end
+    end
+    
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
             local char = p.Character
             
-            -- Aura ESP
             local hl = char:FindFirstChild("EliteHL")
             if _G.Esp then
                 if not hl then
                     hl = Instance.new("Highlight", char)
                     hl.Name = "EliteHL"
-                    hl.FillColor = Color3.fromRGB(255, 0, 0)
-                    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    hl.FillColor = Color3.fromRGB(0, 255, 0)
+                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
                 end
             elseif hl then hl:Destroy() end
 
-            -- Distância
-            local bill = char:FindFirstChild("EliteDist")
+            local bill = char.Head:FindFirstChild("EliteDist")
             if _G.Distance then
                 if not bill then
                     bill = Instance.new("BillboardGui", char.Head)
@@ -89,52 +115,24 @@ RunService.Heartbeat:Connect(function()
                     local lbl = Instance.new("TextLabel", bill)
                     lbl.BackgroundTransparency = 1
                     lbl.Size = UDim2.new(1, 0, 1, 0)
-                    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    lbl.TextColor3 = Color3.fromRGB(0, 255, 0)
                     lbl.TextStrokeTransparency = 0
                     lbl.Font = Enum.Font.SourceSansBold
-                    lbl.TextSize = 16
+                    lbl.TextSize = 18
                     lbl.Name = "Label"
                 end
-                local mag = (LocalPlayer.Character.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
-                bill.Label.Text = math.floor(mag) .. " Studs"
+                if char:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local dist = (LocalPlayer.Character.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
+                    bill.Label.Text = math.floor(dist) .. "m"
+                end
             elseif bill then bill:Destroy() end
         end
     end
 end)
 
---- BUSCA DE ALVO (SIMPLIFICADA E AGRESSIVA) ---
-local function GetClosestTarget()
-    local target = nil
-    local shortestDistance = math.huge
-    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            local head = player.Character.Head
-            local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
-            
-            if onScreen then
-                -- Se o Aimbot não funcionar, remove temporariamente o 'and IsVisible(head)' para testar
-                if IsVisible(head) then
-                    local screenDist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
-                    if screenDist < shortestDistance then
-                        target = head
-                        shortestDistance = screenDist
-                    end
-                end
-            end
-        end
-    end
-    return target
-end
-
---- LOOP DA CÂMARA (LOCK INSTANTÂNEO) ---
-RunService.RenderStepped:Connect(function()
-    if _G.Aimbot then
-        local target = GetClosestTarget()
-        if target then
-            -- MIRA DIRETA NA CABEÇA
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
-        end
-    end
-end)
+Rayfield:Notify({
+   Title = "BEM-VINDO, DANIEL",
+   Content = "Script carregado com sucesso!",
+   Duration = 3,
+   Image = 104071203297793,
+})
