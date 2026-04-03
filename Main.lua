@@ -1,14 +1,13 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "ELITE V13 | DANIX HUB",
-   LoadingTitle = "Carregando Foto do Gato...",
-   LoadingSubtitle = "Configurando Aimbot...",
-   ConfigurationSaving = { Enabled = false },
-   Image = 104071203297793 -- ID da sua foto do gato
+   Name = "ELITE V13 | DEFINITIVE AIM",
+   LoadingTitle = "A Corrigir Motores de Mira...",
+   LoadingSubtitle = "Filtro de Colisão Ignorado",
+   ConfigurationSaving = { Enabled = false }
 })
 
--- Variáveis de Controle
+-- Variáveis de Controlo
 local _G = {
     Esp = false,
     Aimbot = false,
@@ -20,62 +19,122 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 
--- Criando a Aba com a sua Foto (Onde você clica para abrir as funções)
-local MainTab = Window:CreateTab("Principal", 104071203297793) 
+local MainTab = Window:CreateTab("Combate & Visual", 4483362458)
 
-MainTab:CreateSection("Funções de Elite")
-
-MainTab:CreateToggle({
-   Name = "Ativar ESP (Ver através da parede)",
-   CurrentValue = false,
-   Callback = function(Value)
-      _G.Esp = Value
-      if not Value then
-          -- Limpa o ESP se desligar (opcional)
-      end
-   end
-})
-
-MainTab:CreateToggle({
-   Name = "Ativar Aimbot (Mira Automática)",
-   CurrentValue = false,
-   Callback = function(Value)
-      _G.Aimbot = Value
-   end
-})
-
--- Função para achar o player mais próximo
-local function GetClosestPlayer()
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local pos, onScreen = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
-            if onScreen then
-                local distance = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)).Magnitude
-                if distance < shortestDistance then
-                    closestPlayer = player
-                    shortestDistance = distance
-                end
-            end
-        end
-    end
-    return closestPlayer
+--- FUNÇÃO DE VISIBILIDADE ULTRA-MELHORADA ---
+local function IsVisible(part)
+    if not part or not LocalPlayer.Character then return false end
+    
+    local char = LocalPlayer.Character
+    local origin = Camera.CFrame.Position
+    local destination = part.Position
+    local direction = (destination - origin).Unit * (destination - origin).Magnitude
+    
+    local params = RaycastParams.new()
+    -- Ignora o teu personagem E o personagem do inimigo para o tiro passar
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances = {char, part.Parent}
+    
+    local result = workspace:Raycast(origin, direction, params)
+    
+    -- Se o raio não bater em NADA (nil), o caminho está livre
+    return result == nil
 end
 
--- Rodar o Aimbot o tempo todo
-RunService.RenderStepped:Connect(function()
-    if _G.Aimbot then
-        local target = GetClosestPlayer()
-        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.HumanoidRootPart.Position)
+--- INTERFACE ---
+MainTab:CreateToggle({
+   Name = "Visual: X-RAY ESP",
+   CurrentValue = false,
+   Callback = function(Value) _G.Esp = Value end,
+})
+
+MainTab:CreateToggle({
+   Name = "Visual: Distância (Studs)",
+   CurrentValue = false,
+   Callback = function(Value) _G.Distance = Value end,
+})
+
+MainTab:CreateToggle({
+   Name = "Combate: Grudar Mira (Head-Lock)",
+   CurrentValue = false,
+   Callback = function(Value) _G.Aimbot = Value end,
+})
+
+--- LÓGICA DE VISUAIS ---
+RunService.Heartbeat:Connect(function()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+            local char = p.Character
+            
+            -- Aura ESP
+            local hl = char:FindFirstChild("EliteHL")
+            if _G.Esp then
+                if not hl then
+                    hl = Instance.new("Highlight", char)
+                    hl.Name = "EliteHL"
+                    hl.FillColor = Color3.fromRGB(255, 0, 0)
+                    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                end
+            elseif hl then hl:Destroy() end
+
+            -- Distância
+            local bill = char:FindFirstChild("EliteDist")
+            if _G.Distance then
+                if not bill then
+                    bill = Instance.new("BillboardGui", char.Head)
+                    bill.Name = "EliteDist"
+                    bill.Size = UDim2.new(0, 100, 0, 50)
+                    bill.AlwaysOnTop = true
+                    bill.ExtentsOffset = Vector3.new(0, 3, 0)
+                    local lbl = Instance.new("TextLabel", bill)
+                    lbl.BackgroundTransparency = 1
+                    lbl.Size = UDim2.new(1, 0, 1, 0)
+                    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    lbl.TextStrokeTransparency = 0
+                    lbl.Font = Enum.Font.SourceSansBold
+                    lbl.TextSize = 16
+                    lbl.Name = "Label"
+                end
+                local mag = (LocalPlayer.Character.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
+                bill.Label.Text = math.floor(mag) .. " Studs"
+            elseif bill then bill:Destroy() end
         end
     end
 end)
 
-Rayfield:Notify({
-   Title = "Danix Hub Ativado!",
-   Content = "Clique no ícone do gato para configurar",
-   Duration = 5,
-   Image = 104071203297793,
-})
+--- BUSCA DE ALVO (SIMPLIFICADA E AGRESSIVA) ---
+local function GetClosestTarget()
+    local target = nil
+    local shortestDistance = math.huge
+    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            local head = player.Character.Head
+            local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
+            
+            if onScreen then
+                -- Se o Aimbot não funcionar, remove temporariamente o 'and IsVisible(head)' para testar
+                if IsVisible(head) then
+                    local screenDist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
+                    if screenDist < shortestDistance then
+                        target = head
+                        shortestDistance = screenDist
+                    end
+                end
+            end
+        end
+    end
+    return target
+end
+
+--- LOOP DA CÂMARA (LOCK INSTANTÂNEO) ---
+RunService.RenderStepped:Connect(function()
+    if _G.Aimbot then
+        local target = GetClosestTarget()
+        if target then
+            -- MIRA DIRETA NA CABEÇA
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
+        end
+    end
+end)
