@@ -1,11 +1,11 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "ELITE V13 | DEFINITIVE AIM",
-   LoadingTitle = "A Corrigir Motores de Mira...",
-   LoadingSubtitle = "Filtro de Colisão Ignorado",
+   Name = "ELITE V13 | DANIX HUB",
+   LoadingTitle = "Danix Hub carregando...",
+   LoadingSubtitle = "Sistema de Elite Ativado",
    ConfigurationSaving = { Enabled = false },
-   Image = 104071203297793 -- Sua foto personalizada
+   Image = 104071203297793 -- Foto na tela de carregamento
 })
 
 -- Variáveis de Controlo
@@ -20,7 +20,8 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 
-local MainTab = Window:CreateTab("Combate & Visual", 104071203297793)
+-- Criando a Aba com a sua Foto (Ao clicar no ícone da foto, abre esta aba)
+local MainTab = Window:CreateTab("Principal", 104071203297793) 
 
 --- FUNÇÃO DE VISIBILIDADE ---
 local function IsVisible(part)
@@ -54,6 +55,9 @@ local function GetClosestPlayer()
     return closestPlayer
 end
 
+-- Botões dentro da Aba da Foto
+MainTab:CreateSection("Configurações de Combate")
+
 MainTab:CreateToggle({
    Name = "Ativar ESP (Wallhack)",
    CurrentValue = false,
@@ -78,6 +82,7 @@ MainTab:CreateToggle({
    end
 })
 
+-- Lógica do Aimbot
 RunService.RenderStepped:Connect(function()
     if _G.Aimbot then
         local target = GetClosestPlayer()
