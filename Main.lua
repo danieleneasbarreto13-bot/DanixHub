@@ -4,7 +4,8 @@ local Window = Rayfield:CreateWindow({
    Name = "ELITE V13 | DEFINITIVE AIM",
    LoadingTitle = "A Corrigir Motores de Mira...",
    LoadingSubtitle = "Filtro de Colisão Ignorado",
-   ConfigurationSaving = { Enabled = false }
+   ConfigurationSaving = { Enabled = false },
+   Image = 104071203297793 -- Sua foto personalizada
 })
 
 -- Variáveis de Controlo
@@ -19,122 +20,71 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 
-local MainTab = Window:CreateTab("Combate & Visual", 4483362458)
+local MainTab = Window:CreateTab("Combate & Visual", 104071203297793)
 
---- FUNÇÃO DE VISIBILIDADE ULTRA-MELHORADA ---
+--- FUNÇÃO DE VISIBILIDADE ---
 local function IsVisible(part)
     if not part or not LocalPlayer.Character then return false end
-    
     local char = LocalPlayer.Character
     local origin = Camera.CFrame.Position
     local destination = part.Position
     local direction = (destination - origin).Unit * (destination - origin).Magnitude
-    
-    local params = RaycastParams.new()
-    -- Ignora o teu personagem E o personagem do inimigo para o tiro passar
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    params.FilterDescendantsInstances = {char, part.Parent}
-    
-    local result = workspace:Raycast(origin, direction, params)
-    
-    -- Se o raio não bater em NADA (nil), o caminho está livre
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {char, Camera}
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    local result = workspace:Raycast(origin, direction, raycastParams)
     return result == nil
 end
 
---- INTERFACE ---
-MainTab:CreateToggle({
-   Name = "Visual: X-RAY ESP",
-   CurrentValue = false,
-   Callback = function(Value) _G.Esp = Value end,
-})
-
-MainTab:CreateToggle({
-   Name = "Visual: Distância (Studs)",
-   CurrentValue = false,
-   Callback = function(Value) _G.Distance = Value end,
-})
-
-MainTab:CreateToggle({
-   Name = "Combate: Grudar Mira (Head-Lock)",
-   CurrentValue = false,
-   Callback = function(Value) _G.Aimbot = Value end,
-})
-
---- LÓGICA DE VISUAIS ---
-RunService.Heartbeat:Connect(function()
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
-            local char = p.Character
-            
-            -- Aura ESP
-            local hl = char:FindFirstChild("EliteHL")
-            if _G.Esp then
-                if not hl then
-                    hl = Instance.new("Highlight", char)
-                    hl.Name = "EliteHL"
-                    hl.FillColor = Color3.fromRGB(255, 0, 0)
-                    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                end
-            elseif hl then hl:Destroy() end
-
-            -- Distância
-            local bill = char:FindFirstChild("EliteDist")
-            if _G.Distance then
-                if not bill then
-                    bill = Instance.new("BillboardGui", char.Head)
-                    bill.Name = "EliteDist"
-                    bill.Size = UDim2.new(0, 100, 0, 50)
-                    bill.AlwaysOnTop = true
-                    bill.ExtentsOffset = Vector3.new(0, 3, 0)
-                    local lbl = Instance.new("TextLabel", bill)
-                    lbl.BackgroundTransparency = 1
-                    lbl.Size = UDim2.new(1, 0, 1, 0)
-                    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    lbl.TextStrokeTransparency = 0
-                    lbl.Font = Enum.Font.SourceSansBold
-                    lbl.TextSize = 16
-                    lbl.Name = "Label"
-                end
-                local mag = (LocalPlayer.Character.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
-                bill.Label.Text = math.floor(mag) .. " Studs"
-            elseif bill then bill:Destroy() end
-        end
-    end
-end)
-
---- BUSCA DE ALVO (SIMPLIFICADA E AGRESSIVA) ---
-local function GetClosestTarget()
-    local target = nil
+local function GetClosestPlayer()
+    local closestPlayer = nil
     local shortestDistance = math.huge
-    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-
     for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            local head = player.Character.Head
-            local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
-            
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local pos, onScreen = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
             if onScreen then
-                -- Se o Aimbot não funcionar, remove temporariamente o 'and IsVisible(head)' para testar
-                if IsVisible(head) then
-                    local screenDist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
-                    if screenDist < shortestDistance then
-                        target = head
-                        shortestDistance = screenDist
-                    end
+                local distance = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)).Magnitude
+                if distance < shortestDistance and IsVisible(player.Character.HumanoidRootPart) then
+                    closestPlayer = player
+                    shortestDistance = distance
                 end
             end
         end
     end
-    return target
+    return closestPlayer
 end
 
---- LOOP DA CÂMARA (LOCK INSTANTÂNEO) ---
+MainTab:CreateToggle({
+   Name = "Ativar ESP (Wallhack)",
+   CurrentValue = false,
+   Callback = function(Value)
+      _G.Esp = Value
+   end
+})
+
+MainTab:CreateToggle({
+   Name = "Ativar Aimbot",
+   CurrentValue = false,
+   Callback = function(Value)
+      _G.Aimbot = Value
+   end
+})
+
+MainTab:CreateToggle({
+   Name = "Mostrar Distância",
+   CurrentValue = false,
+   Callback = function(Value)
+      _G.Distance = Value
+   end
+})
+
 RunService.RenderStepped:Connect(function()
     if _G.Aimbot then
-        local target = GetClosestTarget()
-        if target then
-            -- MIRA DIRETA NA CABEÇA
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
+        local target = GetClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.HumanoidRootPart.Position)
         end
     end
 end)
+
+Rayfield:LoadConfiguration()
