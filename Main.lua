@@ -2,13 +2,13 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
    Name = "ELITE V13 | DANIX HUB",
-   LoadingTitle = "Danix Hub carregando...",
-   LoadingSubtitle = "Sistema de Elite Ativado",
+   LoadingTitle = "Carregando Foto do Gato...",
+   LoadingSubtitle = "Configurando Aimbot...",
    ConfigurationSaving = { Enabled = false },
-   Image = 104071203297793 -- Foto na tela de carregamento
+   Image = 104071203297793 -- ID da sua foto do gato
 })
 
--- Variáveis de Controlo
+-- Variáveis de Controle
 local _G = {
     Esp = false,
     Aimbot = false,
@@ -20,23 +20,31 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 
--- Criando a Aba com a sua Foto (Ao clicar no ícone da foto, abre esta aba)
+-- Criando a Aba com a sua Foto (Onde você clica para abrir as funções)
 local MainTab = Window:CreateTab("Principal", 104071203297793) 
 
---- FUNÇÃO DE VISIBILIDADE ---
-local function IsVisible(part)
-    if not part or not LocalPlayer.Character then return false end
-    local char = LocalPlayer.Character
-    local origin = Camera.CFrame.Position
-    local destination = part.Position
-    local direction = (destination - origin).Unit * (destination - origin).Magnitude
-    local raycastParams = RaycastParams.new()
-    raycastParams.FilterDescendantsInstances = {char, Camera}
-    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-    local result = workspace:Raycast(origin, direction, raycastParams)
-    return result == nil
-end
+MainTab:CreateSection("Funções de Elite")
 
+MainTab:CreateToggle({
+   Name = "Ativar ESP (Ver através da parede)",
+   CurrentValue = false,
+   Callback = function(Value)
+      _G.Esp = Value
+      if not Value then
+          -- Limpa o ESP se desligar (opcional)
+      end
+   end
+})
+
+MainTab:CreateToggle({
+   Name = "Ativar Aimbot (Mira Automática)",
+   CurrentValue = false,
+   Callback = function(Value)
+      _G.Aimbot = Value
+   end
+})
+
+-- Função para achar o player mais próximo
 local function GetClosestPlayer()
     local closestPlayer = nil
     local shortestDistance = math.huge
@@ -45,7 +53,7 @@ local function GetClosestPlayer()
             local pos, onScreen = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
             if onScreen then
                 local distance = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)).Magnitude
-                if distance < shortestDistance and IsVisible(player.Character.HumanoidRootPart) then
+                if distance < shortestDistance then
                     closestPlayer = player
                     shortestDistance = distance
                 end
@@ -55,34 +63,7 @@ local function GetClosestPlayer()
     return closestPlayer
 end
 
--- Botões dentro da Aba da Foto
-MainTab:CreateSection("Configurações de Combate")
-
-MainTab:CreateToggle({
-   Name = "Ativar ESP (Wallhack)",
-   CurrentValue = false,
-   Callback = function(Value)
-      _G.Esp = Value
-   end
-})
-
-MainTab:CreateToggle({
-   Name = "Ativar Aimbot",
-   CurrentValue = false,
-   Callback = function(Value)
-      _G.Aimbot = Value
-   end
-})
-
-MainTab:CreateToggle({
-   Name = "Mostrar Distância",
-   CurrentValue = false,
-   Callback = function(Value)
-      _G.Distance = Value
-   end
-})
-
--- Lógica do Aimbot
+-- Rodar o Aimbot o tempo todo
 RunService.RenderStepped:Connect(function()
     if _G.Aimbot then
         local target = GetClosestPlayer()
@@ -92,4 +73,9 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-Rayfield:LoadConfiguration()
+Rayfield:Notify({
+   Title = "Danix Hub Ativado!",
+   Content = "Clique no ícone do gato para configurar",
+   Duration = 5,
+   Image = 104071203297793,
+})
