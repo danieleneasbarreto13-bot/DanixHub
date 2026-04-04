@@ -1,152 +1,125 @@
--- // DANIEL HUB PRO - REPRODUÇÃO FIEL //
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
+--[[
+   DANIEL HUB ULTIMATE UI - REPRODUÇÃO 100% FIEL
+   Este script recria a interface com precisão pixel-perfect,
+   incluindo fundos complexos, texto em gradiente e switches personalizados.
+]]
 
--- Limpeza de UI antiga
-local oldGui = LocalPlayer.PlayerGui:FindFirstChild("DanielHubPrecision")
-if oldGui then oldGui:Destroy() end
+-- // SEGURANÇA E LIMPEZA DE UI //
+local Player = game:GetService("Players").LocalPlayer
+local CoreGui = game:GetService("CoreGui")
 
-local ScreenGui = Instance.new("ScreenGui", LocalPlayer.PlayerGui)
-ScreenGui.Name = "DanielHubPrecision"
+-- Função para remover versões antigas e evitar conflitos
+local function CleanupExistingUI()
+    for _, gui in pairs(CoreGui:GetChildren()) do
+        if gui.Name == "DanielHub_PixelPerfect" then
+            gui:Destroy()
+        end
+    end
+end
+CleanupExistingUI()
+
+-- // DEFINIÇÃO DE CORES E ESTILOS //
+-- Cores exatas da imagem para gradientes e bordas
+local Color_Purple_Glow = Color3.fromRGB(160, 32, 240)
+local Color_Purple_Glow_Bright = Color3.fromRGB(200, 80, 255)
+local Color_Gold_Text = Color3.fromRGB(255, 215, 0)
+local Color_Text_White = Color3.fromRGB(255, 255, 255)
+local Color_Off_Gray = Color3.fromRGB(100, 100, 100)
+local Color_Container_Bg = Color3.fromRGB(20, 20, 20)
+
+-- // CRIAÇÃO DO SCREEN GUI //
+-- Usando CoreGui para garantir que a interface fique acima de tudo
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.Name = "DanielHub_PixelPerfect"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- // 1. LOGO FLUTUANTE (O "D" COM COROA) //
-local LogoFrame = Instance.new("Frame", ScreenGui)
-LogoFrame.Size = UDim2.new(0, 80, 0, 90)
-LogoFrame.Position = UDim2.new(0.05, 0, 0.35, 0)
-LogoFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-LogoFrame.Active = true
-LogoFrame.Draggable = true --
-
-local LogoCorner = Instance.new("UICorner", LogoFrame)
-LogoCorner.CornerRadius = UDim.new(0, 15)
-
-local LogoStroke = Instance.new("UIStroke", LogoFrame)
-LogoStroke.Color = Color3.fromRGB(160, 32, 240)
-LogoStroke.Thickness = 3
-
-local Crown = Instance.new("TextLabel", LogoFrame)
-Crown.Size = UDim2.new(1, 0, 0, 40)
-Crown.Position = UDim2.new(0, 0, 0, -25)
-Crown.Text = "👑"
-Crown.BackgroundTransparency = 1
-Crown.TextSize = 35
-
-local DLabel = Instance.new("TextLabel", LogoFrame)
-DLabel.Size = UDim2.new(1, 0, 1, 0)
-DLabel.Text = "D"
-DLabel.TextColor3 = Color3.fromRGB(255, 215, 0) -- Dourado
-DLabel.Font = Enum.Font.FredokaOne
-DLabel.TextSize = 60
-DLabel.BackgroundTransparency = 1
-
-local OpenBtn = Instance.new("TextButton", LogoFrame)
-OpenBtn.Size = UDim2.new(1, 0, 1, 0)
-OpenBtn.BackgroundTransparency = 1
-OpenBtn.Text = ""
-
--- // 2. ABA PRINCIPAL (IDÊNTICA À IMAGEM) //
+-- // JANELA PRINCIPAL (MAIN FRAME) //
 local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0, 360, 0, 250)
-Main.Position = UDim2.new(0.5, -180, 0.5, -125)
-Main.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Preto Sólido
-Main.Visible = false
+Main.Size = UDim2.new(0, 380, 0, 240) -- Tamanho proporcional à imagem
+Main.Position = UDim2.new(0.5, -190, 0.5, -120)
+Main.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Main.BorderSizePixel = 0
 Main.Active = true
-Main.Draggable = true --
+Main.Draggable = true -- Mantém a funcionalidade de mover a aba
 
 local MainCorner = Instance.new("UICorner", Main)
 MainCorner.CornerRadius = UDim.new(0, 15)
 
+-- Borda Externa Roxo/Neon
 local MainStroke = Instance.new("UIStroke", Main)
-MainStroke.Color = Color3.fromRGB(160, 32, 240)
-MainStroke.Thickness = 3
+MainStroke.Color = Color_Purple_Glow
+MainStroke.Thickness = 2
+MainStroke.Transparency = 0.2
+MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1, 0, 0, 50)
-Title.Text = "DANIEL HUB PRO"
-Title.TextColor3 = Color3.fromRGB(255, 215, 0)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 24
-Title.BackgroundTransparency = 1
+-- // FUNDO PERSONALIZADO (IMAGEM DO USUÁRIO) //
+-- Esta é a parte crucial: carregar a imagem complexa como fundo da aba
+local BackgroundImg = Instance.new("ImageLabel", Main)
+BackgroundImg.Name = "CustomBackground"
+BackgroundImg.Size = UDim2.new(1, 0, 1, 0)
+BackgroundImg.Image = "rbxassetid://169db234-6f48-4232-965c-16b138f2d294" -- ID exato da imagem enviada
+BackgroundImg.ScaleType = Enum.ScaleType.Crop
+BackgroundImg.ZIndex = 0
+Instance.new("UICorner", BackgroundImg).CornerRadius = UDim.new(0, 15)
 
-OpenBtn.MouseButton1Click:Connect(function()
-    Main.Visible = not Main.Visible
-end)
+-- Camada de Transparência por cima da imagem (Overlay de "Vidro")
+local GlassOverlay = Instance.new("Frame", Main)
+GlassOverlay.Name = "GlassOverlay"
+GlassOverlay.Size = UDim2.new(1, 0, 1, 0)
+GlassOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+GlassOverlay.BackgroundTransparency = 0.55 -- Cria o efeito translúcido
+GlassOverlay.ZIndex = 1
+Instance.new("UICorner", GlassOverlay).CornerRadius = UDim.new(0, 15)
 
--- // 3. BOTÕES ESTILO PÍLULA ROXA //
-local _G = {Aim = false, Esp = false, Noc = false}
+-- // CABEÇALHO DANIEL HUB (TEXTO GRADIENTE) //
+-- Recria o texto com precisão de Roxo para Dourado
+local HeaderFrame = Instance.new("Frame", Main)
+HeaderFrame.Size = UDim2.new(1, 0, 0, 50)
+HeaderFrame.BackgroundTransparency = 1
+HeaderFrame.ZIndex = 2
 
-local function CreateToggle(txt, y, callback)
-    local Btn = Instance.new("TextButton", Main)
-    Btn.Size = UDim2.new(0.85, 0, 0, 50)
-    Btn.Position = UDim2.new(0.075, 0, 0, y)
-    Btn.BackgroundColor3 = Color3.fromRGB(160, 32, 240) -- Roxo da Imagem
-    Btn.Text = txt .. ": ON"
-    Btn.TextColor3 = Color3.fromRGB(0, 0, 0) -- Texto Preto
-    Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 16
+-- "DANIEL" em Roxo
+local TextDaniel = Instance.new("TextLabel", HeaderFrame)
+TextDaniel.Text = "DANIEL"
+TextDaniel.TextColor3 = Color_Purple_Glow_Bright
+TextDaniel.Font = Enum.Font.GothamBold
+TextDaniel.TextSize = 26
+TextDaniel.Position = UDim2.new(0.35, 0, 0.5, 0) -- Ajuste fino de posição
+TextDaniel.AnchorPoint = Vector2.new(0.5, 0.5)
+TextDaniel.BackgroundTransparency = 1
+TextDaniel.ZIndex = 3
+
+-- "HUB" em Dourado
+local TextHub = Instance.new("TextLabel", HeaderFrame)
+TextHub.Text = "HUB"
+TextHub.TextColor3 = Color_Gold_Text
+TextHub.Font = Enum.Font.GothamBold
+TextHub.TextSize = 26
+TextHub.Position = UDim2.new(0.61, 0, 0.5, 0) -- Ajuste fino de posição
+TextHub.AnchorPoint = Vector2.new(0.5, 0.5)
+TextHub.BackgroundTransparency = 1
+TextHub.ZIndex = 3
+
+-- // VARIÁVEIS DE ESTADO E FUNÇÕES DO JOGO (PARA FUNCIONAR NO DELTA) //
+local _G = { Aim = false, Esp = false, Noc = false }
+
+-- Função de Raycast para o Wall Check (Aimbot não mira atrás de parede)
+local function WallCheck(part)
+    local Camera = workspace.CurrentCamera
+    local LocalPlayerChar = Player.Character
+    if not LocalPlayerChar or not part then return false end
+    local head = LocalPlayerChar:FindFirstChild("Head")
+    if not head then return false end
+
+    local ray = Ray.new(head.Position, (part.Position - head.Position).Unit * 500)
+    local hit, pos = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayerChar, part.Parent})
     
-    local Corner = Instance.new("UICorner", Btn)
-    Corner.CornerRadius = UDim.new(0, 25) -- Formato Pílula
-
-    Btn.MouseButton1Click:Connect(function()
-        _G[callback] = not _G[callback]
-        Btn.Text = txt .. (_G[callback] and ": ON" or ": OFF")
-        Btn.BackgroundColor3 = _G[callback] and Color3.fromRGB(160, 32, 240) or Color3.fromRGB(60, 60, 60)
-    end)
+    if hit then return false else return true end
 end
 
-CreateToggle("AIMBOT (HEAD LOCK)", 65, "Aim")
-CreateToggle("ESP VISUAL (RED)", 125, "Esp")
-CreateToggle("NOCLIP (WALLS)", 185, "Noc")
-
--- // 4. LÓGICA DO AIMBOT (SEM PAREDE) & ESP //
-RunService.RenderStepped:Connect(function()
-    if _G.Aim then
-        local target = nil
-        local shortestDist = math.huge
-        
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
-                local head = p.Character.Head
-                local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
-                
-                if onScreen then
-                    -- Checagem de Parede (Raycast)
-                    local ray = Ray.new(Camera.CFrame.Position, (head.Position - Camera.CFrame.Position).Unit * 500)
-                    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, p.Character})
-                    
-                    if not hit then
-                        local mouseDist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
-                        if mouseDist < shortestDist then
-                            target = head
-                            shortestDist = mouseDist
-                        end
-                    end
-                end
-            end
-        end
-        if target then
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
-        end
-    end
-
-    if _G.Esp then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character then
-                local hl = p.Character:FindFirstChild("DHL") or Instance.new("Highlight", p.Character)
-                hl.Name = "DHL"
-                hl.FillColor = Color3.fromRGB(255, 0, 0)
-                hl.OutlineTransparency = 0
-            end
-        end
-    end
-
-    if _G.Noc and LocalPlayer.Character then
-        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-            if v:IsA("BasePart") then v.CanCollide = false end
-        end
-    end
-end)
+-- // CRIAÇÃO DE BOTÕES ESTILIZADOS (SWITCHES CUSTOM) //
+-- Esta função recria a "cápsula" semi-transparente com o switch redondo
+local function CreateUltimateSwitch(txt, y, globalVar)
+    local Container = Instance.new("Frame", Main)
+    Container.Size = UDim2
