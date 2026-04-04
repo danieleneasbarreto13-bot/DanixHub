@@ -3,7 +3,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
    Name = "ELITE V13 | DANIEL HUB",
    LoadingTitle = "Carregando Sistema Completo...",
-   LoadingSubtitle = "Créditos: DANIEL",
+   LoadingSubtitle = "Créditos: DANIEL & WELDERSON",
    ConfigurationSaving = { Enabled = false }
 })
 
@@ -127,14 +127,15 @@ MainTab:CreateColorPicker({
     end
 })
 
+-- // SEÇÃO DE CRÉDITOS ATUALIZADA
 MainTab:CreateSection("Créditos")
 
 MainTab:CreateParagraph({
-    Title = "👑 FEITO POR DANIEL", 
-    Content = "Script definitivo otimizado para Delta Executor."
+    Title = "👑 FEITO POR DANIEL & WELDERSON", 
+    Content = "Script definitivo otimizado para Delta Executor. Desenvolvido por Daniel e Welderson."
 })
 
--- // SEÇÃO DISCORD (LINK VERDE QUE COPIA)
+-- // SEÇÃO DISCORD
 MainTab:CreateSection("Comunidade")
 
 MainTab:CreateButton({
@@ -196,8 +197,8 @@ RunService.RenderStepped:Connect(function()
 end)
 
 Rayfield:Notify({
-   Title = "DANIEL HUB CARREGADO",
-   Content = "Script pronto! Entre no nosso Discord.",
+   Title = "ELITE HUB CARREGADO",
+   Content = "Créditos: Daniel & Welderson",
    Duration = 5,
    Image = 4483362458,
 })
