@@ -1,145 +1,67 @@
--- // DANIEL HUB - VERSÃO BOTÃO FLUTUANTE //
+-- // DANIEL HUB LOGO - CUSTOM 3D LOGO //
 local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
-local Frame = Instance.new("Frame", ScreenGui)
-local OpenBtn = Instance.new("TextButton", ScreenGui)
-local UICornerBtn = Instance.new("UICorner", OpenBtn)
-local UIBorderBtn = Instance.new("UIStroke", OpenBtn)
+local FloatButton = Instance.new("Frame", ScreenGui)
+local DLabel = Instance.new("TextLabel", FloatButton)
+local CrownLabel = Instance.new("TextLabel", FloatButton)
+local Button = Instance.new("TextButton", FloatButton)
 
--- // CONFIGURAÇÃO DO BOTÃO QUE ABRE O MENU //
-OpenBtn.Name = "DanielOpenButton"
-OpenBtn.Size = UDim2.new(0, 50, 0, 50)
-OpenBtn.Position = UDim2.new(0.1, 0, 0.1, 0)
-OpenBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15) -- Preto
-OpenBtn.Text = "✠" -- Ícone no botão
-OpenBtn.TextColor3 = Color3.fromRGB(160, 32, 240) -- Roxo
-OpenBtn.TextSize = 30
-OpenBtn.Active = true
-OpenBtn.Draggable = true -- VOCÊ PODE MOVER PARA ONDE QUISER
+-- // Configuração do Botão Flutuante (Arrastável) //
+FloatButton.Size = UDim2.new(0, 60, 0, 70) -- Tamanho do Logo
+FloatButton.Position = UDim2.new(0.1, 0, 0.2, 0) -- Posição inicial
+FloatButton.BackgroundColor3 = Color3.fromRGB(10, 10, 10) -- Fundo Preto
+FloatButton.BorderSizePixel = 0
+FloatButton.Active = true
+FloatButton.Draggable = true -- Você pode mover com o dedo!
 
-UICornerBtn.CornerRadius = UDim.new(0, 50) -- Deixa redondo
-UIBorderBtn.Color = Color3.fromRGB(160, 32, 240) -- Borda Roxa
-UIBorderBtn.Thickness = 2
+-- Cantos arredondados
+local Corner = Instance.new("UICorner", FloatButton)
+Corner.CornerRadius = UDim.new(0, 10)
 
--- // CONFIGURAÇÃO DA JANELA PRINCIPAL //
-Frame.Name = "MainFrame"
-Frame.Size = UDim2.new(0, 220, 0, 260)
-Frame.Position = UDim2.new(0.5, -110, 0.5, -130)
-Frame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-Frame.BorderSizePixel = 2
-Frame.BorderColor3 = Color3.fromRGB(160, 32, 240)
-Frame.Visible = false -- Começa invisível
-Frame.Active = true
-Frame.Draggable = true
+-- Borda Roxa Neon
+local Stroke = Instance.new("UIStroke", FloatButton)
+Stroke.Color = Color3.fromRGB(160, 32, 240) -- Roxo
+Stroke.Thickness = 3
 
--- Título
-local Title = Instance.new("TextLabel", Frame)
-Title.Size = UDim2.new(1, 0, 0, 45)
-Title.Text = "Feito por DANIEL"
-Title.TextColor3 = Color3.fromRGB(160, 32, 240)
-Title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 20
+-- // A Coroa 👑 //
+CrownLabel.Size = UDim2.new(1, 0, 0, 30)
+CrownLabel.Position = UDim2.new(0, 0, 0, -10) -- Um pouco acima do D
+CrownLabel.Text = "👑"
+CrownLabel.TextColor3 = Color3.fromRGB(255, 215, 0) -- Dourado
+CrownLabel.Font = Enum.Font.FredokaOne
+CrownLabel.TextSize = 30
+CrownLabel.BackgroundTransparency = 1
 
--- Abrir/Fechar ao clicar no botão
-OpenBtn.MouseButton1Click:Connect(function()
-    Frame.Visible = not Frame.Visible
-end)
+-- // O 'D' em 3D Dourado //
+DLabel.Size = UDim2.new(1, 0, 1, 0)
+DLabel.Position = UDim2.new(0, 0, 0, 10) -- Centralizado abaixo da coroa
+DLabel.Text = "𝕯" -- Letra Gótica (Simula 3D)
+DLabel.TextColor3 = Color3.fromRGB(255, 180, 0) -- Ouro Rico
+DLabel.Font = Enum.Font.Creepster
+DLabel.TextSize = 65
+DLabel.BackgroundTransparency = 1
 
--- // BOTÕES DE FUNÇÕES //
-local function CreateBtn(text, pos)
-    local btn = Instance.new("TextButton", Frame)
-    btn.Size = UDim2.new(0.9, 0, 0, 45)
-    btn.Position = UDim2.new(0.05, 0, 0, pos)
-    btn.Text = text
-    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 16
-    return btn
-end
+-- Efeito de Sombra (3D) no 'D'
+DLabel.TextStrokeTransparency = 0
+DLabel.TextStrokeColor3 = Color3.fromRGB(120, 85, 0) -- Ouro Escuro
 
-local ToggleAimbot = CreateBtn("Aimbot: OFF", 60)
-local ToggleEsp = CreateBtn("ESP + LINHAS: OFF", 115)
-local ToggleNoClip = CreateBtn("NoClip: OFF", 170)
+-- // O Botão Invisível para Clicar //
+Button.Size = UDim2.new(1, 0, 1, 0)
+Button.BackgroundTransparency = 1
+Button.Text = ""
 
--- // VARIÁVEIS E LÓGICA //
-local _G = {Aimbot = false, Esp = false, NoClip = false}
-local Camera = workspace.CurrentCamera
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
-ToggleAimbot.MouseButton1Click:Connect(function()
-    _G.Aimbot = not _G.Aimbot
-    ToggleAimbot.Text = _G.Aimbot and "Aimbot: ON" or "Aimbot: OFF"
-    ToggleAimbot.BackgroundColor3 = _G.Aimbot and Color3.fromRGB(160, 32, 240) or Color3.fromRGB(30, 30, 30)
-end)
-
-ToggleEsp.MouseButton1Click:Connect(function()
-    _G.Esp = not _G.Esp
-    ToggleEsp.Text = _G.Esp and "ESP: ON" or "ESP: OFF"
-    ToggleEsp.BackgroundColor3 = _G.Esp and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(30, 30, 30)
-end)
-
-ToggleNoClip.MouseButton1Click:Connect(function()
-    _G.NoClip = not _G.NoClip
-    ToggleNoClip.Text = _G.NoClip and "NoClip: ON" or "NoClip: OFF"
-    ToggleNoClip.BackgroundColor3 = _G.NoClip and Color3.fromRGB(160, 32, 240) or Color3.fromRGB(30, 30, 30)
-end)
-
--- // LOOP DE FUNÇÕES //
-game:GetService("RunService").RenderStepped:Connect(function()
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            local char = p.Character
-            
-            -- Tracers
-            local tracer = char:FindFirstChild("DLine")
-            if _G.Esp then
-                if not tracer then
-                    tracer = Instance.new("LineHandleAdornment", char)
-                    tracer.Name = "DLine"
-                    tracer.Thickness = 2
-                    tracer.Color3 = Color3.fromRGB(255, 0, 0)
-                    tracer.AlwaysOnTop = true
-                end
-                tracer.Adornee = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                tracer.Target = char.HumanoidRootPart
-            elseif tracer then tracer:Destroy() end
-
-            -- Highlight
-            local hl = char:FindFirstChild("DHL")
-            if _G.Esp then
-                if not hl then
-                    hl = Instance.new("Highlight", char)
-                    hl.Name = "DHL"
-                    hl.FillColor = Color3.fromRGB(255, 0, 0)
-                end
-            elseif hl then hl:Destroy() end
-        end
-    end
-
-    if _G.Aimbot then
-        local target = nil
-        local dist = math.huge
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
-                local pos, onScreen = Camera:WorldToViewportPoint(p.Character.Head.Position)
-                if onScreen then
-                    local ray = Ray.new(Camera.CFrame.Position, (p.Character.Head.Position - Camera.CFrame.Position).Unit * 500)
-                    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, p.Character})
-                    if not hit then
-                        local mag = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
-                        if mag < dist then target = p.Character.Head; dist = mag end
-                    end
-                end
-            end
-        end
-        if target then Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position) end
-    end
-
-    if _G.NoClip and LocalPlayer.Character then
-        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-            if v:IsA("BasePart") then v.CanCollide = false end
-        end
+-- Lógica para Abrir/Fechar a Tab Principal do Script (Ajuste o nome do seu menu aqui)
+local MenuVisible = false
+Button.MouseButton1Click:Connect(function()
+    if MenuVisible == false then
+        -- Coloque o nome da sua janela Rayfield ou Custom aqui
+        -- game:GetService("CoreGui").Rayfield.Visible = true 
+        print("Abrindo Menu do Daniel!")
+        MenuVisible = true
+    else
+        -- game:GetService("CoreGui").Rayfield.Visible = false
+        print("Fechando Menu do Daniel!")
+        MenuVisible = false
     end
 end)
+
+print("Logotipo Daniel Hub Carregado!")
