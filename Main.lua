@@ -1,39 +1,170 @@
---- NOVO SISTEMA DE PULO MELHORADO ---
-local function DoJump()
-    local Character = LocalPlayer.Character
-    if Character then
-        local RootPart = Character:FindFirstChild("HumanoidRootPart")
-        local Humanoid = Character:FindFirstChildOfClass("Humanoid")
-        
-        if RootPart and Humanoid then
-            -- Força o estado de pulo para o jogo entender a ação
-            Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-            
-            -- Zera a velocidade de queda (Y = 0) para o pulo ser sempre consistente
-            -- e aplica a força definida no Slider
-            RootPart.Velocity = Vector3.new(RootPart.Velocity.X, _G.JumpPower, RootPart.Velocity.Z)
-        end
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "ELITE V13 | DELTA EDITION",
+   LoadingTitle = "Iniciando Motores de Mira...",
+   LoadingSubtitle = "Créditos: DANIEL",
+   ConfigurationSaving = { Enabled = false }
+})
+
+-- Variáveis de Controle
+local _G = {
+    Aimbot = false,
+    Esp = false,
+    JumpEnabled = false,
+    JumpPower = 50
+}
+
+local Camera = workspace.CurrentCamera
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+-- // INTERFACE DO BOTÃO DE PULO (REDONDO/MÓVEL)
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local JumpBtn = Instance.new("TextButton")
+local UICorner = Instance.new("UICorner")
+local Arrow = Instance.new("TextLabel")
+
+JumpBtn.Name = "EliteJumpBtn"
+JumpBtn.Parent = ScreenGui
+JumpBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+JumpBtn.Position = UDim2.new(0.5, 0, 0.8, 0)
+JumpBtn.Size = UDim2.new(0, 65, 0, 65)
+JumpBtn.Text = ""
+JumpBtn.Visible = false
+JumpBtn.Active = true
+JumpBtn.Draggable = true 
+
+UICorner.CornerRadius = UDim.new(1, 0)
+UICorner.Parent = JumpBtn
+
+Arrow.Parent = JumpBtn
+Arrow.Size = UDim2.new(1, 0, 1, 0)
+Arrow.BackgroundTransparency = 1
+Arrow.Text = "↑"
+Arrow.TextColor3 = Color3.fromRGB(0, 255, 0)
+Arrow.TextSize = 45
+Arrow.Font = Enum.Font.SourceSansBold
+
+-- Mecânica de Pulo
+JumpBtn.MouseButton1Click:Connect(function()
+    local Char = LocalPlayer.Character
+    if Char and Char:FindFirstChild("HumanoidRootPart") then
+        Char:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+        Char.HumanoidRootPart.Velocity = Vector3.new(Char.HumanoidRootPart.Velocity.X, _G.JumpPower, Char.HumanoidRootPart.Velocity.Z)
     end
+end)
+
+-- // FUNÇÃO WALL CHECK (MIRA NÃO PEGA ATRÁS DA PAREDE)
+local function IsVisible(targetPart)
+    local character = LocalPlayer.Character
+    if not character then return false end
+    local origin = Camera.CFrame.Position
+    local destination = targetPart.Position
+    local direction = (destination - origin).Unit * (destination - origin).Magnitude
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {character, targetPart.Parent}
+    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+    local raycastResult = workspace:Raycast(origin, direction, raycastParams)
+    return raycastResult == nil
 end
 
--- Slider com feedback em tempo real
-MovementTab:CreateSlider({
-   Name = "Potência do Pulo (Ajuste Fino)",
-   Range = {1, 200}, -- Aumentei para 200 caso queira pulos super altos
+-- // ABA ÚNICA
+local MainTab = Window:CreateTab("Principal", 4483362458)
+
+MainTab:CreateSection("Combate Avançado")
+
+MainTab:CreateToggle({
+   Name = "Ativar Head-Lock (Wall-Check)",
+   CurrentValue = false,
+   Callback = function(Value) _G.Aimbot = Value end,
+})
+
+MainTab:CreateToggle({
+   Name = "Visual: X-RAY ESP",
+   CurrentValue = false,
+   Callback = function(Value) _G.Esp = Value end,
+})
+
+MainTab:CreateSection("Movimentação")
+
+MainTab:CreateToggle({
+   Name = "Mostrar Botão de Pulo Externo",
+   CurrentValue = false,
+   Callback = function(Value)
+       _G.JumpEnabled = Value
+       JumpBtn.Visible = Value
+   end,
+})
+
+MainTab:CreateSlider({
+   Name = "Força do Pulo",
+   Range = {1, 100},
    Increment = 1,
-   Suffix = " Studs/s",
+   Suffix = " Power",
    CurrentValue = 50,
    Callback = function(Value)
        _G.JumpPower = Value
    end,
 })
 
--- Botão externo com feedback visual ao clicar
-ExternalJumpBtn.MouseButton1Down:Connect(function()
-    ExternalJumpBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- Escurece ao apertar
-    DoJump()
+-- // BARRA DE CRÉDITOS (A QUE VOCÊ PEDIU)
+MainTab:CreateSection("Créditos")
+
+local CreditLabel = MainTab:CreateLabel("FEITO POR DANIEL")
+-- Nota: Como o Rayfield padrão não permite mudar a cor de fundo do Label,
+-- eu usei um Parágrafo estilizado que simula a barra verde no menu.
+MainTab:CreateParagraph({Title = "👑 Autoria", Content = "Script desenvolvido e otimizado por DANIEL"})
+
+-- // LÓGICA DO AIMBOT E ESP
+local function GetClosestTarget()
+    local target = nil
+    local shortestDistance = math.huge
+    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            local head = player.Character.Head
+            local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
+            if onScreen and IsVisible(head) then
+                local screenDist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
+                if screenDist < shortestDistance then
+                    target = head
+                    shortestDistance = screenDist
+                end
+            end
+        end
+    end
+    return target
+end
+
+RunService.RenderStepped:Connect(function()
+    if _G.Aimbot then
+        local target = GetClosestTarget()
+        if target then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
+        end
+    end
+    
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local hl = p.Character:FindFirstChild("EliteHL")
+            if _G.Esp then
+                if not hl then
+                    hl = Instance.new("Highlight", p.Character)
+                    hl.Name = "EliteHL"
+                    hl.FillColor = Color3.fromRGB(0, 255, 0) -- Mudei para Verde pra combinar
+                    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                end
+            elseif hl then hl:Destroy() end
+        end
+    end
 end)
 
-ExternalJumpBtn.MouseButton1Up:Connect(function()
-    ExternalJumpBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Volta ao normal
-end)
+Rayfield:Notify({
+   Title = "DANIEL HUB LOADED",
+   Content = "Aproveite as funções, Daniel!",
+   Duration = 5,
+   Image = 4483362458,
+})
