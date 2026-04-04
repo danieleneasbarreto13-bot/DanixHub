@@ -1,57 +1,82 @@
--- // DANIEL HUB - SEM RAYFIELD (ABRE INSTANTÂNEO) //
+-- // DANIEL HUB - VERSÃO BOTÃO FLUTUANTE //
 local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
 local Frame = Instance.new("Frame", ScreenGui)
-local Title = Instance.new("TextLabel", Frame)
-local ToggleAimbot = Instance.new("TextButton", Frame)
-local ToggleEsp = Instance.new("TextButton", Frame)
-local ToggleNoClip = Instance.new("TextButton", Frame)
+local OpenBtn = Instance.new("TextButton", ScreenGui)
+local UICornerBtn = Instance.new("UICorner", OpenBtn)
+local UIBorderBtn = Instance.new("UIStroke", OpenBtn)
 
--- Configuração da Janela (Preto e Roxo - Sem avisos)
+-- // CONFIGURAÇÃO DO BOTÃO QUE ABRE O MENU //
+OpenBtn.Name = "DanielOpenButton"
+OpenBtn.Size = UDim2.new(0, 50, 0, 50)
+OpenBtn.Position = UDim2.new(0.1, 0, 0.1, 0)
+OpenBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15) -- Preto
+OpenBtn.Text = "✠" -- Ícone no botão
+OpenBtn.TextColor3 = Color3.fromRGB(160, 32, 240) -- Roxo
+OpenBtn.TextSize = 30
+OpenBtn.Active = true
+OpenBtn.Draggable = true -- VOCÊ PODE MOVER PARA ONDE QUISER
+
+UICornerBtn.CornerRadius = UDim.new(0, 50) -- Deixa redondo
+UIBorderBtn.Color = Color3.fromRGB(160, 32, 240) -- Borda Roxa
+UIBorderBtn.Thickness = 2
+
+-- // CONFIGURAÇÃO DA JANELA PRINCIPAL //
+Frame.Name = "MainFrame"
 Frame.Size = UDim2.new(0, 220, 0, 260)
 Frame.Position = UDim2.new(0.5, -110, 0.5, -130)
 Frame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 Frame.BorderSizePixel = 2
-Frame.BorderColor3 = Color3.fromRGB(160, 32, 240) -- Borda Roxa
+Frame.BorderColor3 = Color3.fromRGB(160, 32, 240)
+Frame.Visible = false -- Começa invisível
 Frame.Active = true
-Frame.Draggable = true -- Você pode arrastar na tela
+Frame.Draggable = true
 
+-- Título
+local Title = Instance.new("TextLabel", Frame)
 Title.Size = UDim2.new(1, 0, 0, 45)
 Title.Text = "Feito por DANIEL"
 Title.TextColor3 = Color3.fromRGB(160, 32, 240)
 Title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 22
+Title.TextSize = 20
 
-local function SetupButton(btn, text, pos)
+-- Abrir/Fechar ao clicar no botão
+OpenBtn.MouseButton1Click:Connect(function()
+    Frame.Visible = not Frame.Visible
+end)
+
+-- // BOTÕES DE FUNÇÕES //
+local function CreateBtn(text, pos)
+    local btn = Instance.new("TextButton", Frame)
     btn.Size = UDim2.new(0.9, 0, 0, 45)
     btn.Position = UDim2.new(0.05, 0, 0, pos)
     btn.Text = text
     btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 18
-    btn.BorderSizePixel = 0
+    btn.TextSize = 16
+    return btn
 end
 
-SetupButton(ToggleAimbot, "Aimbot Lock: OFF", 60)
-SetupButton(ToggleEsp, "ESP + LINHAS: OFF", 115)
-SetupButton(ToggleNoClip, "NoClip: OFF", 170)
+local ToggleAimbot = CreateBtn("Aimbot: OFF", 60)
+local ToggleEsp = CreateBtn("ESP + LINHAS: OFF", 115)
+local ToggleNoClip = CreateBtn("NoClip: OFF", 170)
 
+-- // VARIÁVEIS E LÓGICA //
 local _G = {Aimbot = false, Esp = false, NoClip = false}
 local Camera = workspace.CurrentCamera
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- Lógica dos Botões
 ToggleAimbot.MouseButton1Click:Connect(function()
     _G.Aimbot = not _G.Aimbot
-    ToggleAimbot.Text = _G.Aimbot and "Aimbot Lock: ON" or "Aimbot Lock: OFF"
+    ToggleAimbot.Text = _G.Aimbot and "Aimbot: ON" or "Aimbot: OFF"
     ToggleAimbot.BackgroundColor3 = _G.Aimbot and Color3.fromRGB(160, 32, 240) or Color3.fromRGB(30, 30, 30)
 end)
 
 ToggleEsp.MouseButton1Click:Connect(function()
     _G.Esp = not _G.Esp
-    ToggleEsp.Text = _G.Esp and "ESP + LINHAS: ON" or "ESP + LINHAS: OFF"
+    ToggleEsp.Text = _G.Esp and "ESP: ON" or "ESP: OFF"
     ToggleEsp.BackgroundColor3 = _G.Esp and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(30, 30, 30)
 end)
 
@@ -61,190 +86,60 @@ ToggleNoClip.MouseButton1Click:Connect(function()
     ToggleNoClip.BackgroundColor3 = _G.NoClip and Color3.fromRGB(160, 32, 240) or Color3.fromRGB(30, 30, 30)
 end)
 
--- LOOP DE ATUALIZAÇÃO (Aimbot, ESP, Linhas e NoClip)
+-- // LOOP DE FUNÇÕES //
 game:GetService("RunService").RenderStepped:Connect(function()
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
             local char = p.Character
             
-            -- Linhas (Tracers) Vermelhas
-            local tracer = char:FindFirstChild("DanielLine")
+            -- Tracers
+            local tracer = char:FindFirstChild("DLine")
             if _G.Esp then
                 if not tracer then
                     tracer = Instance.new("LineHandleAdornment", char)
-                    tracer.Name = "DanielLine"
-                    tracer.Length = 0
+                    tracer.Name = "DLine"
                     tracer.Thickness = 2
-                    tracer.ZIndex = 10
                     tracer.Color3 = Color3.fromRGB(255, 0, 0)
                     tracer.AlwaysOnTop = true
                 end
                 tracer.Adornee = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                 tracer.Target = char.HumanoidRootPart
-            elseif tracer then
-                tracer:Destroy()
-            end
+            elseif tracer then tracer:Destroy() end
 
-            -- Highlight (X-Ray) Vermelho
-            local hl = char:FindFirstChild("D_HL")
+            -- Highlight
+            local hl = char:FindFirstChild("DHL")
             if _G.Esp then
                 if not hl then
                     hl = Instance.new("Highlight", char)
-                    hl.Name = "D_HL"
-                  local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+                    hl.Name = "DHL"
+                    hl.FillColor = Color3.fromRGB(255, 0, 0)
+                end
+            elseif hl then hl:Destroy() end
+        end
+    end
 
--- // INTERFACE PRETO E ROXO //
-local Window = Rayfield:CreateWindow({
-   Name = "DANIEL HUB | V13",
-   LoadingTitle = "Feito por DANIEL", -- Sem fontes estranhas para não dar []
-   LoadingSubtitle = "O melhor para o Delta VNG!",
-   ConfigurationSaving = { Enabled = false },
-   Image = 104071203297793,
-   CustomTheme = {
-      ["AccentColor"] = Color3.fromRGB(160, 32, 240), -- Roxo 🟣
-      ["BackgroundColor"] = Color3.fromRGB(0, 0, 0),   -- Preto 🌑
-      ["WindowColor"] = Color3.fromRGB(12, 12, 12),
-      ["TextColor"] = Color3.fromRGB(255, 255, 255),
-      ["TabColor"] = Color3.fromRGB(35, 0, 70),
-      ["TabTextColor"] = Color3.fromRGB(255, 255, 255),
-      ["TitleColor"] = Color3.fromRGB(160, 32, 240),
-      ["ButtonColor"] = Color3.fromRGB(45, 0, 90),
-      ["ToggleColor"] = Color3.fromRGB(160, 32, 240)
-   }
-})
-
-local _G = { 
-    Esp = false, 
-    Aimbot = false, 
-    Distance = true, 
-    NoClip = false 
-}
-
-local Camera = workspace.CurrentCamera
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-
--- // TODAS AS FUNÇÕES EM UMA SÓ ABA //
-local MainTab = Window:CreateTab("Painel Único", 104071203297793)
-
-MainTab:CreateSection("Configurações do Script")
-
-MainTab:CreateToggle({
-   Name = "Ativar NoClip (Atravessar)",
-   CurrentValue = false,
-   Callback = function(v) _G.NoClip = v end,
-})
-
-MainTab:CreateToggle({
-   Name = "Aimbot Lock (Somente Visíveis)",
-   CurrentValue = false,
-   Callback = function(v) _G.Aimbot = v end,
-})
-
-MainTab:CreateToggle({
-   Name = "X-RAY ESP (Vermelho 🔴)",
-   CurrentValue = false,
-   Callback = function(v) _G.Esp = v end,
-})
-
--- // FUNÇÃO PARA CHECAR SE O INIMIGO ESTÁ ATRÁS DA PAREDE //
-local function IsVisible(part)
-    local character = LocalPlayer.Character
-    if not character then return false end
-    
-    local params = RaycastParams.new()
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    params.FilterDescendantsInstances = {character, part.Parent}
-    
-    local origin = Camera.CFrame.Position
-    local direction = (part.Position - origin).Unit * (part.Position - origin).Magnitude
-    local result = workspace:Raycast(origin, direction, params)
-    
-    return result == nil -- Se bater em algo (parede), result não é nil, então retorna false
-end
-
--- // BUSCA DE ALVO PRÓXIMO DA MIRA //
-local function GetClosestTarget()
-    local target, dist = nil, math.huge
-    local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-    
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
-            local head = p.Character.Head
-            local pos, screen = Camera:WorldToViewportPoint(head.Position)
-            
-            if screen then
-                -- SÓ GRUDA SE ESTIVER VISÍVEL (WALL CHECK)
-                if IsVisible(head) then
-                    local m = (Vector2.new(pos.X, pos.Y) - center).Magnitude
-                    if m < dist then 
-                        target = head
-                        dist = m 
+    if _G.Aimbot then
+        local target = nil
+        local dist = math.huge
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                local pos, onScreen = Camera:WorldToViewportPoint(p.Character.Head.Position)
+                if onScreen then
+                    local ray = Ray.new(Camera.CFrame.Position, (p.Character.Head.Position - Camera.CFrame.Position).Unit * 500)
+                    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, p.Character})
+                    if not hit then
+                        local mag = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                        if mag < dist then target = p.Character.Head; dist = mag end
                     end
                 end
             end
         end
+        if target then Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position) end
     end
-    return target
-end
 
--- // LOOP PRINCIPAL //
-RunService.RenderStepped:Connect(function()
-    -- AIMBOT AGRESSIVO (VISÍVEL)
-    if _G.Aimbot then
-        local target = GetClosestTarget()
-        if target then 
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position) 
-        end
-    end
-    
-    -- NOCLIP
     if _G.NoClip and LocalPlayer.Character then
-        for _, p in pairs(LocalPlayer.Character:GetDescendants()) do
-            if p:IsA("BasePart") then p.CanCollide = false end
-        end
-    end
-    
-    -- VISUAIS VERMELHOS [M]
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
-            local char = p.Character
-            
-            -- ESP Highlight (Vermelho)
-            local hl = char:FindFirstChild("E_HL")
-            if _G.Esp then
-                if not hl then
-                    hl = Instance.new("Highlight", char); hl.Name = "E_HL"
-                    hl.FillColor = Color3.fromRGB(255, 0, 0) -- VERMELHO 🔴
-                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                end
-            elseif hl then hl:Destroy() end
-
-            -- Distância (Vermelho)
-            local bill = char.Head:FindFirstChild("E_Dist")
-            if _G.Distance then
-                if not bill then
-                    bill = Instance.new("BillboardGui", char.Head); bill.Name = "E_Dist"
-                    bill.Size = UDim2.new(0,100,0,50); bill.AlwaysOnTop = true
-                    bill.ExtentsOffset = Vector3.new(0,3,0)
-                    local l = Instance.new("TextLabel", bill)
-                    l.BackgroundTransparency = 1; l.Size = UDim2.new(1,0,1,0)
-                    l.TextColor3 = Color3.fromRGB(255, 0, 0); l.Font = "SourceSansBold"; l.TextSize = 18
-                    l.Name = "Label"
-                end
-                if char:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    local d = (LocalPlayer.Character.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
-                    bill.Label.Text = math.floor(d) .. "m"
-                end
-            elseif bill then bill:Destroy() end
+        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
         end
     end
 end)
-
-Rayfield:Notify({
-   Title = "Feito por DANIEL",
-   Content = "Script Carregado! Modo: Wall Check Ativo.",
-   Duration = 5,
-   Image = 104071203297793,
-})
