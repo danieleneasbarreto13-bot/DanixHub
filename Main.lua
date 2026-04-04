@@ -13,7 +13,8 @@ local _G = {
     Esp = false,
     EspColor = Color3.fromRGB(0, 255, 0),
     JumpEnabled = false,
-    JumpPower = 50
+    JumpPower = 50,
+    Discord = "https://discord.gg/8R5wd4MDR"
 }
 
 local Camera = workspace.CurrentCamera
@@ -122,7 +123,6 @@ MainTab:CreateColorPicker({
     Name = "Cor de Destaque do Menu",
     Color = Color3.fromRGB(0, 255, 0),
     Callback = function(Value)
-        -- Muda a cor dos elementos do Rayfield em tempo real
         Window.ModifyTheme({AccentColor = Value})
     end
 })
@@ -132,6 +132,22 @@ MainTab:CreateSection("Créditos")
 MainTab:CreateParagraph({
     Title = "👑 FEITO POR DANIEL", 
     Content = "Script definitivo otimizado para Delta Executor."
+})
+
+-- // SEÇÃO DISCORD (LINK VERDE QUE COPIA)
+MainTab:CreateSection("Comunidade")
+
+MainTab:CreateButton({
+   Name = "🔗 Copiar Discord (Verde)",
+   Callback = function()
+       setclipboard(_G.Discord)
+       Rayfield:Notify({
+           Title = "Link Copiado!",
+           Content = "O link do Discord foi copiado para sua área de transferência.",
+           Duration = 5,
+           Image = 4483362458,
+       })
+   end,
 })
 
 -- // LÓGICA DE LOOP (AIMBOT / ESP)
@@ -181,7 +197,7 @@ end)
 
 Rayfield:Notify({
    Title = "DANIEL HUB CARREGADO",
-   Content = "Todas as funções estão ativas!",
+   Content = "Script pronto! Entre no nosso Discord.",
    Duration = 5,
    Image = 4483362458,
 })
