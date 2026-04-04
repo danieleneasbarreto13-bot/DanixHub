@@ -1,140 +1,84 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- Configurações Iniciais
+local InfiniteJumpEnabled = true
+local JumpForce = 50
+local UserInputService = game:GetService("UserInputService")
 
-local Window = Rayfield:CreateWindow({
-   Name = "ELITE V13 | DEFINITIVE AIM",
-   LoadingTitle = "A Corrigir Motores de Mira...",
-   LoadingSubtitle = "Filtro de Colisão Ignorado",
-   ConfigurationSaving = { Enabled = false }
-})
+-- Criando a Interface (GUI)
+local ScreenGui = Instance.new("ScreenGui")
+local MainButton = Instance.new("TextButton")
+local ConfigFrame = Instance.new("Frame")
+local Slider = Instance.new("TextBox")
+local Title = Instance.new("TextLabel")
 
--- Variáveis de Controlo
-local _G = {
-    Esp = false,
-    Aimbot = false,
-    Distance = false
-}
+ScreenGui.Name = "CustomJumpGui"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-local Camera = workspace.CurrentCamera
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
+-- Botão Principal (O que você clica para pular)
+MainButton.Name = "JumpButton"
+MainButton.Parent = ScreenGui
+MainButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+MainButton.Position = UDim2.new(0.1, 0, 0.5, 0)
+MainButton.Size = UDim2.new(0, 70, 0, 70)
+MainButton.Text = "PULAR"
+MainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MainButton.Font = Enum.Font.SourceSansBold
+MainButton.TextSize = 20
+MainButton.Draggable = true -- Permite mover o botão
+MainButton.Active = true
+MainButton.Selectable = true
 
-local MainTab = Window:CreateTab("Combate & Visual", 4483362458)
+-- Janela de Configuração de Força (Abaixo do botão)
+ConfigFrame.Name = "ConfigFrame"
+ConfigFrame.Parent = MainButton
+ConfigFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ConfigFrame.Position = UDim2.new(0, 0, 1, 5)
+ConfigFrame.Size = UDim2.new(0, 70, 0, 50)
+ConfigFrame.BorderSizePixel = 0
 
---- FUNÇÃO DE VISIBILIDADE ULTRA-MELHORADA ---
-local function IsVisible(part)
-    if not part or not LocalPlayer.Character then return false end
-    
-    local char = LocalPlayer.Character
-    local origin = Camera.CFrame.Position
-    local destination = part.Position
-    local direction = (destination - origin).Unit * (destination - origin).Magnitude
-    
-    local params = RaycastParams.new()
-    -- Ignora o teu personagem E o personagem do inimigo para o tiro passar
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    params.FilterDescendantsInstances = {char, part.Parent}
-    
-    local result = workspace:Raycast(origin, direction, params)
-    
-    -- Se o raio não bater em NADA (nil), o caminho está livre
-    return result == nil
-end
+Title.Parent = ConfigFrame
+Title.Size = UDim2.new(1, 0, 0.4, 0)
+Title.Text = "FORÇA"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundTransparency = 1
+Title.TextSize = 12
 
---- INTERFACE ---
-MainTab:CreateToggle({
-   Name = "Visual: X-RAY ESP",
-   CurrentValue = false,
-   Callback = function(Value) _G.Esp = Value end,
-})
+Slider.Parent = ConfigFrame
+Slider.Position = UDim2.new(0.1, 0, 0.4, 0)
+Slider.Size = UDim2.new(0.8, 0, 0.5, 0)
+Slider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+Slider.Text = tostring(JumpForce)
+Slider.TextColor3 = Color3.fromRGB(0, 255, 100)
+Slider.ClearTextOnFocus = true
 
-MainTab:CreateToggle({
-   Name = "Visual: Distância (Studs)",
-   CurrentValue = false,
-   Callback = function(Value) _G.Distance = Value end,
-})
-
-MainTab:CreateToggle({
-   Name = "Combate: Grudar Mira (Head-Lock)",
-   CurrentValue = false,
-   Callback = function(Value) _G.Aimbot = Value end,
-})
-
---- LÓGICA DE VISUAIS ---
-RunService.Heartbeat:Connect(function()
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
-            local char = p.Character
-            
-            -- Aura ESP
-            local hl = char:FindFirstChild("EliteHL")
-            if _G.Esp then
-                if not hl then
-                    hl = Instance.new("Highlight", char)
-                    hl.Name = "EliteHL"
-                    hl.FillColor = Color3.fromRGB(255, 0, 0)
-                    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                end
-            elseif hl then hl:Destroy() end
-
-            -- Distância
-            local bill = char:FindFirstChild("EliteDist")
-            if _G.Distance then
-                if not bill then
-                    bill = Instance.new("BillboardGui", char.Head)
-                    bill.Name = "EliteDist"
-                    bill.Size = UDim2.new(0, 100, 0, 50)
-                    bill.AlwaysOnTop = true
-                    bill.ExtentsOffset = Vector3.new(0, 3, 0)
-                    local lbl = Instance.new("TextLabel", bill)
-                    lbl.BackgroundTransparency = 1
-                    lbl.Size = UDim2.new(1, 0, 1, 0)
-                    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    lbl.TextStrokeTransparency = 0
-                    lbl.Font = Enum.Font.SourceSansBold
-                    lbl.TextSize = 16
-                    lbl.Name = "Label"
-                end
-                local mag = (LocalPlayer.Character.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
-                bill.Label.Text = math.floor(mag) .. " Studs"
-            elseif bill then bill:Destroy() end
-        end
+-- Lógica da Força do Pulo
+Slider.FocusLost:Connect(function()
+    local val = tonumber(Slider.Text)
+    if val then
+        JumpForce = math.clamp(val, 1, 100)
+        Slider.Text = tostring(JumpForce)
+    else
+        Slider.Text = tostring(JumpForce)
     end
 end)
 
---- BUSCA DE ALVO (SIMPLIFICADA E AGRESSIVA) ---
-local function GetClosestTarget()
-    local target = nil
-    local shortestDistance = math.huge
-    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            local head = player.Character.Head
-            local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
-            
-            if onScreen then
-                -- Se o Aimbot não funcionar, remove temporariamente o 'and IsVisible(head)' para testar
-                if IsVisible(head) then
-                    local screenDist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
-                    if screenDist < shortestDistance then
-                        target = head
-                        shortestDistance = screenDist
-                    end
-                end
-            end
-        end
+-- Lógica do Pulo Infinito ao clicar no botão
+MainButton.MouseButton1Click:Connect(function()
+    local player = game.Players.LocalPlayer
+    if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+        player.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+        wait(0.1)
+        player.Character.HumanoidRootPart.Velocity = Vector3.new(0, JumpForce, 0)
     end
-    return target
-end
+end)
 
---- LOOP DA CÂMARA (LOCK INSTANTÂNEO) ---
-RunService.RenderStepped:Connect(function()
-    if _G.Aimbot then
-        local target = GetClosestTarget()
-        if target then
-            -- MIRA DIRETA NA CABEÇA
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
+-- Lógica de Teclado (Opcional: Barra de Espaço também usa a força personalizada)
+UserInputService.JumpRequest:Connect(function()
+    if InfiniteJumpEnabled then
+        local player = game.Players.LocalPlayer
+        if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+            player.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+            player.Character.HumanoidRootPart.Velocity = Vector3.new(0, JumpForce, 0)
         end
     end
 end)
