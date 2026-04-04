@@ -1,44 +1,39 @@
--- // DANIEL HUB PRO - SUPORTE TOTAL DELTA //
+-- // DANIEL HUB PRO - SISTEMA DE DISTÂNCIA E ARRASTE //
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
--- Tenta encontrar o melhor lugar para a interface
-local ParentObj = nil
-local success, err = pcall(function()
-    ParentObj = game:GetService("CoreGui")
-end)
-if not success then ParentObj = LocalPlayer:WaitForChild("PlayerGui") end
-
--- Limpa execuções travadas
-for _, v in pairs(ParentObj:GetChildren()) do
-    if v.Name == "DanielHubFinalV3" then v:Destroy() end
+-- Limpeza de UI antiga
+for _, v in pairs(LocalPlayer.PlayerGui:GetChildren()) do
+    if v.Name == "DanielHubV4" then v:Destroy() end
 end
 
-local ScreenGui = Instance.new("ScreenGui", ParentObj)
-ScreenGui.Name = "DanielHubFinalV3"
+local ScreenGui = Instance.new("ScreenGui", LocalPlayer.PlayerGui)
+ScreenGui.Name = "DanielHubV4"
 ScreenGui.ResetOnSpawn = false
 
--- // 1. ÍCONE "D" + 👑 (BOTÃO DE SEGURANÇA) //
+-- // 1. O ÍCONE "D" TOTALMENTE ARRASTÁVEL //
 local Logo = Instance.new("Frame", ScreenGui)
 Logo.Size = UDim2.new(0, 80, 0, 90)
 Logo.Position = UDim2.new(0.05, 0, 0.4, 0)
 Logo.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Logo.Active = true
-Logo.Draggable = true 
+Logo.Draggable = true -- Agora você põe onde quiser!
 
-Instance.new("UICorner", Logo).CornerRadius = UDim.new(0, 15)
-local Stroke = Instance.new("UIStroke", Logo)
-Stroke.Color = Color3.fromRGB(160, 32, 240)
-Stroke.Thickness = 3
+local LogoCorner = Instance.new("UICorner", Logo)
+LogoCorner.CornerRadius = UDim.new(0, 15)
+local LogoStroke = Instance.new("UIStroke", Logo)
+LogoStroke.Color = Color3.fromRGB(160, 32, 240)
+LogoStroke.Thickness = 3
 
-local DText = Instance.new("TextLabel", Logo)
-DText.Size = UDim2.new(1, 0, 1, 0)
-DText.Text = "D"
-DText.TextColor3 = Color3.fromRGB(255, 215, 0)
-DText.Font = Enum.Font.FredokaOne
-DText.TextSize = 60
-DText.BackgroundTransparency = 1
+local DLabel = Instance.new("TextLabel", Logo)
+DLabel.Size = UDim2.new(1, 0, 1, 0)
+DLabel.Text = "D"
+DLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+DLabel.Font = Enum.Font.FredokaOne
+DLabel.TextSize = 60
+DLabel.BackgroundTransparency = 1
 
 local Crown = Instance.new("TextLabel", Logo)
 Crown.Size = UDim2.new(1, 0, 0, 40)
@@ -52,60 +47,35 @@ OpenBtn.Size = UDim2.new(1, 0, 1, 0)
 OpenBtn.BackgroundTransparency = 1
 OpenBtn.Text = ""
 
--- // 2. MENU ULTRA ESTICADO (ESTILO 1775267276388.png) //
+-- // 2. MENU PRINCIPAL (FUNDO MÁRMORE + ESTICADO) //
 local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0, 460, 0, 260) -- Super esticado
-Main.Position = UDim2.new(0.5, -230, 0.5, -130)
-Main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Main.Size = UDim2.new(0, 460, 0, 280)
+Main.Position = UDim2.new(0.5, -230, 0.5, -140)
 Main.Visible = false
 Main.Active = true
 Main.Draggable = true
 
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 15)
-local MainStroke = Instance.new("UIStroke", Main)
-MainStroke.Color = Color3.fromRGB(160, 32, 240)
-MainStroke.Thickness = 3
+local MainCorner = Instance.new("UICorner", Main)
+MainCorner.CornerRadius = UDim.new(0, 15)
 
--- FUNDO DE MÁRMORE (IMAGEM 7348.jpg)
 local Bg = Instance.new("ImageLabel", Main)
 Bg.Size = UDim2.new(1, 0, 1, 0)
-Bg.Image = "rbxassetid://169db234-6f48-4232-965c-16b138f2d294" -- ID da sua imagem
+Bg.Image = "rbxassetid://169db234-6f48-4232-965c-16b138f2d294" -- Mármore fiel
 Bg.ScaleType = Enum.ScaleType.Crop
 Bg.ZIndex = 0
 Instance.new("UICorner", Bg).CornerRadius = UDim.new(0, 15)
 
--- TÍTULO DUAS CORES
-local T1 = Instance.new("TextLabel", Main)
-T1.Size = UDim2.new(0.5, 0, 0, 50)
-T1.Text = "DANIEL"
-T1.TextColor3 = Color3.fromRGB(160, 32, 240)
-T1.Font = Enum.Font.GothamBold
-T1.TextSize = 28
-T1.Position = UDim2.new(0, 15, 0, 0)
-T1.TextXAlignment = Enum.TextXAlignment.Right
-T1.BackgroundTransparency = 1
-
-local T2 = Instance.new("TextLabel", Main)
-T2.Size = UDim2.new(0.5, 0, 0, 50)
-T2.Text = " HUB PRO"
-T2.TextColor3 = Color3.fromRGB(255, 215, 0)
-T2.Font = Enum.Font.GothamBold
-T2.TextSize = 28
-T2.Position = UDim2.new(0.5, 0, 0, 0)
-T2.TextXAlignment = Enum.TextXAlignment.Left
-T2.BackgroundTransparency = 1
-
--- Ação de Abrir
+-- Abertura
 OpenBtn.MouseButton1Down:Connect(function()
     Main.Visible = not Main.Visible
 end)
 
--- // 3. BOTÕES PÍLULA //
+-- // 3. BOTÕES ON/OFF COM DISTÂNCIA //
 local _G = {Aim = false, Esp = false, Noc = false}
 
-local function CreateBtn(txt, y, val)
+local function CreateToggle(txt, y, val)
     local B = Instance.new("TextButton", Main)
-    B.Size = UDim2.new(0.9, 0, 0, 50)
+    B.Size = UDim2.new(0.9, 0, 0, 55)
     B.Position = UDim2.new(0.05, 0, 0, y)
     B.BackgroundColor3 = Color3.fromRGB(160, 32, 240)
     B.Text = txt .. ": ON"
@@ -121,41 +91,81 @@ local function CreateBtn(txt, y, val)
     end)
 end
 
-CreateBtn("AIMBOT (HEAD)", 70, "Aim")
-CreateBtn("ESP VERMELHO", 130, "Esp")
-CreateBtn("NOCLIP (WALLS)", 190, "Noc")
+CreateToggle("AIMBOT (CLOSEST VISIBLE)", 70, "Aim")
+CreateToggle("ESP + DISTANCE (METERS)", 135, "Esp")
+CreateToggle("NOCLIP (WALLS)", 200, "Noc")
 
--- // 4. LOOP DE FUNÇÕES //
-RunService.RenderStepped:Connect(function()
-    if _G.Aim then
-        local target = nil
-        local dist = 600
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
-                local head = p.Character.Head
-                local pos, vis = workspace.CurrentCamera:WorldToViewportPoint(head.Position)
-                if vis then
-                    local ray = Ray.new(workspace.CurrentCamera.CFrame.Position, (head.Position - workspace.CurrentCamera.CFrame.Position).Unit * 500)
-                    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, p.Character})
-                    if not hit then
-                        local mDist = (Vector2.new(pos.X, pos.Y) - Vector2.new(workspace.CurrentCamera.ViewportSize.X/2, workspace.CurrentCamera.ViewportSize.Y/2)).Magnitude
-                        if mDist < dist then target = head; dist = mDist end
+-- // 4. LÓGICA DO AIMBOT (CLOSEST + WALL CHECK) //
+local function GetClosestPlayer()
+    local target = nil
+    local shortestDist = 600
+    
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+            local head = p.Character.Head
+            local pos, vis = Camera:WorldToViewportPoint(head.Position)
+            
+            if vis then
+                -- Verifica se há parede no caminho
+                local ray = Ray.new(Camera.CFrame.Position, (head.Position - Camera.CFrame.Position).Unit * 500)
+                local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, p.Character})
+                
+                if not hit then
+                    local mouseDist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                    if mouseDist < shortestDist then
+                        target = head
+                        shortestDist = mouseDist
                     end
                 end
             end
         end
-        if target then workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, target.Position) end
+    end
+    return target
+end
+
+-- // 5. LOOP DE RENDERIZAÇÃO //
+RunService.RenderStepped:Connect(function()
+    -- Aimbot
+    if _G.Aim then
+        local t = GetClosestPlayer()
+        if t then Camera.CFrame = CFrame.new(Camera.CFrame.Position, t.Position) end
     end
 
-    if _G.Esp then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character then
-                local h = p.Character:FindFirstChild("DHL") or Instance.new("Highlight", p.Character)
-                h.Name = "DHL"; h.FillColor = Color3.fromRGB(255, 0, 0)
+    -- ESP com Distância
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local char = p.Character
+            local hrp = char.HumanoidRootPart
+            local tag = char:FindFirstChild("DanielESP") or Instance.new("BillboardGui", char)
+            
+            if _G.Esp then
+                tag.Name = "DanielESP"
+                tag.Size = UDim2.new(0, 200, 0, 50)
+                tag.AlwaysOnTop = true
+                tag.Adornee = char:FindFirstChild("Head")
+                tag.ExtentsOffset = Vector3.new(0, 3, 0)
+
+                local label = tag:FindFirstChild("Label") or Instance.new("TextLabel", tag)
+                label.Name = "Label"
+                label.Size = UDim2.new(1, 0, 1, 0)
+                label.BackgroundTransparency = 1
+                label.TextColor3 = Color3.fromRGB(255, 0, 0)
+                label.Font = Enum.Font.GothamBold
+                label.TextSize = 14
+                
+                local dist = math.floor((LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude)
+                label.Text = p.Name .. " [" .. dist .. "M]"
+                
+                local hl = char:FindFirstChild("Highlight") or Instance.new("Highlight", char)
+                hl.FillColor = Color3.fromRGB(255, 0, 0)
+            else
+                if char:FindFirstChild("DanielESP") then char.DanielESP:Destroy() end
+                if char:FindFirstChild("Highlight") then char.Highlight:Destroy() end
             end
         end
     end
 
+    -- NoClip
     if _G.Noc and LocalPlayer.Character then
         for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
             if v:IsA("BasePart") then v.CanCollide = false end
