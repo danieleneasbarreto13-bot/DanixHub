@@ -1,4 +1,97 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- // DANIEL HUB - SEM RAYFIELD (ABRE INSTANTÂNEO) //
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local Frame = Instance.new("Frame", ScreenGui)
+local Title = Instance.new("TextLabel", Frame)
+local ToggleAimbot = Instance.new("TextButton", Frame)
+local ToggleEsp = Instance.new("TextButton", Frame)
+local ToggleNoClip = Instance.new("TextButton", Frame)
+
+-- Configuração da Janela (Preto e Roxo - Sem avisos)
+Frame.Size = UDim2.new(0, 220, 0, 260)
+Frame.Position = UDim2.new(0.5, -110, 0.5, -130)
+Frame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+Frame.BorderSizePixel = 2
+Frame.BorderColor3 = Color3.fromRGB(160, 32, 240) -- Borda Roxa
+Frame.Active = true
+Frame.Draggable = true -- Você pode arrastar na tela
+
+Title.Size = UDim2.new(1, 0, 0, 45)
+Title.Text = "Feito por DANIEL"
+Title.TextColor3 = Color3.fromRGB(160, 32, 240)
+Title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 22
+
+local function SetupButton(btn, text, pos)
+    btn.Size = UDim2.new(0.9, 0, 0, 45)
+    btn.Position = UDim2.new(0.05, 0, 0, pos)
+    btn.Text = text
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 18
+    btn.BorderSizePixel = 0
+end
+
+SetupButton(ToggleAimbot, "Aimbot Lock: OFF", 60)
+SetupButton(ToggleEsp, "ESP + LINHAS: OFF", 115)
+SetupButton(ToggleNoClip, "NoClip: OFF", 170)
+
+local _G = {Aimbot = false, Esp = false, NoClip = false}
+local Camera = workspace.CurrentCamera
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Lógica dos Botões
+ToggleAimbot.MouseButton1Click:Connect(function()
+    _G.Aimbot = not _G.Aimbot
+    ToggleAimbot.Text = _G.Aimbot and "Aimbot Lock: ON" or "Aimbot Lock: OFF"
+    ToggleAimbot.BackgroundColor3 = _G.Aimbot and Color3.fromRGB(160, 32, 240) or Color3.fromRGB(30, 30, 30)
+end)
+
+ToggleEsp.MouseButton1Click:Connect(function()
+    _G.Esp = not _G.Esp
+    ToggleEsp.Text = _G.Esp and "ESP + LINHAS: ON" or "ESP + LINHAS: OFF"
+    ToggleEsp.BackgroundColor3 = _G.Esp and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(30, 30, 30)
+end)
+
+ToggleNoClip.MouseButton1Click:Connect(function()
+    _G.NoClip = not _G.NoClip
+    ToggleNoClip.Text = _G.NoClip and "NoClip: ON" or "NoClip: OFF"
+    ToggleNoClip.BackgroundColor3 = _G.NoClip and Color3.fromRGB(160, 32, 240) or Color3.fromRGB(30, 30, 30)
+end)
+
+-- LOOP DE ATUALIZAÇÃO (Aimbot, ESP, Linhas e NoClip)
+game:GetService("RunService").RenderStepped:Connect(function()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local char = p.Character
+            
+            -- Linhas (Tracers) Vermelhas
+            local tracer = char:FindFirstChild("DanielLine")
+            if _G.Esp then
+                if not tracer then
+                    tracer = Instance.new("LineHandleAdornment", char)
+                    tracer.Name = "DanielLine"
+                    tracer.Length = 0
+                    tracer.Thickness = 2
+                    tracer.ZIndex = 10
+                    tracer.Color3 = Color3.fromRGB(255, 0, 0)
+                    tracer.AlwaysOnTop = true
+                end
+                tracer.Adornee = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                tracer.Target = char.HumanoidRootPart
+            elseif tracer then
+                tracer:Destroy()
+            end
+
+            -- Highlight (X-Ray) Vermelho
+            local hl = char:FindFirstChild("D_HL")
+            if _G.Esp then
+                if not hl then
+                    hl = Instance.new("Highlight", char)
+                    hl.Name = "D_HL"
+                  local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- // INTERFACE PRETO E ROXO //
 local Window = Rayfield:CreateWindow({
