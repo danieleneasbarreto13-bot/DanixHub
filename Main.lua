@@ -1,26 +1,45 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- Este link lê a chave que está no seu GitHub (Key.txt)
+-- // BUSCA A CHAVE DO SEU GITHUB
 local KeyDoGitHub = game:HttpGet("https://raw.githubusercontent.com/danieleneasbarreto13-bot/DanixHub/refs/heads/main/Key.txt")
 
 local Window = Rayfield:CreateWindow({
    Name = "ELITE V13 | DANIEL HUB",
-   LoadingTitle = "Validando Acesso 24h...",
+   LoadingTitle = "Sistema de Verificação 24h...",
    LoadingSubtitle = "Créditos: DANIEL & WELDERSON",
    ConfigurationSaving = {
       Enabled = true,
-      Folder = "EliteHubConfig",
-      FileName = "DanixKeySystem"
+      Folder = "DanixConfig",
+      FileName = "KeySystem"
    },
-   KeySystem = true,
+   KeySystem = true, -- Ativa o bloqueio por chave
    KeySettings = {
-      Title = "Sistema de Chave | Elite Hub",
+      Title = "Chave Necessária",
       Subtitle = "A chave expira a cada 24 horas",
-      Note = "Pegue a chave aqui: https://linkvertise.com/access/4856817/SVCyV5atG9C1", 
-      FileName = "EliteKeyFile", 
-      SaveKey = true, -- Salva a chave no celular do usuário por 24h
-      Key = {KeyDoGitHub} 
+      Note = "Clique no botão abaixo para copiar o link da Key!",
+      FileName = "DanixKey", 
+      SaveKey = true, -- Salva a chave para não pedir toda hora
+      GrabKeyFromSite = false,
+      Key = {KeyDoGitHub} -- Compara com o seu GitHub
    }
 })
 
--- // O RESTANTE DO SEU CÓDIGO (VARIÁVEIS, TABS, ETC) VEM ABAIXO...
+-- // BOTÃO PARA COPIAR O LINK (APARECE NO MENU CASO PRECISE)
+local KeyTab = Window:CreateTab("Obter Key", 4483362458)
+KeyTab:CreateSection("Links de Acesso")
+
+KeyTab:CreateButton({
+   Name = "📋 Copiar Link do Linkvertise",
+   Callback = function()
+       setclipboard("https://linkvertise.com/access/4856817/SVCyV5atG9C1")
+       Rayfield:Notify({
+           Title = "Copiado!",
+           Content = "Link copiado! Cole no seu navegador.",
+           Duration = 5,
+           Image = 4483362458,
+       })
+   end,
+})
+
+-- // O RESTANTE DO SEU CÓDIGO (BOTÕES, AIMBOT, ESP) COMEÇA AQUI...
+-- (Mantenha o código que você já tem abaixo desta linha)
