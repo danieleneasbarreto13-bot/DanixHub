@@ -14,7 +14,8 @@ local _G = {
     EspColor = Color3.fromRGB(0, 255, 0),
     JumpEnabled = false,
     JumpPower = 50,
-    Discord = "https://discord.gg/8R5wd4MDR"
+    Discord = "https://discord.gg/8R5wd4MDR",
+    Aliados = {} -- Tabela de aliados
 }
 
 local Camera = workspace.CurrentCamera
@@ -49,7 +50,6 @@ Arrow.TextColor3 = Color3.fromRGB(0, 255, 0)
 Arrow.TextSize = 45
 Arrow.Font = Enum.Font.SourceSansBold
 
--- Mecânica de Pulo
 JumpBtn.MouseButton1Click:Connect(function()
     local Char = LocalPlayer.Character
     if Char and Char:FindFirstChild("HumanoidRootPart") then
@@ -58,7 +58,7 @@ JumpBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- // FUNÇÃO WALL CHECK (MIRA)
+-- // FUNÇÃO WALL CHECK
 local function IsVisible(targetPart)
     local character = LocalPlayer.Character
     if not character then return false end
@@ -81,6 +81,59 @@ MainTab:CreateToggle({
    Name = "Ativar Head-Lock (Wall-Check)",
    CurrentValue = false,
    Callback = function(Value) _G.Aimbot = Value end,
+})
+
+-- // SEÇÃO DE ALIADOS COM DROPDOWN DINÂMICO
+MainTab:CreateSection("Sistema de Aliados")
+
+local function GetPlayerNames()
+    local names = {}
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then
+            table.insert(names, p.Name)
+        end
+    end
+    return names
+end
+
+local AllyDropdown = MainTab:CreateDropdown({
+   Name = "Selecionar Aliado",
+   Options = GetPlayerNames(),
+   CurrentOption = {""},
+   MultipleOptions = false,
+   Flag = "AllySelector", 
+   Callback = function(Option)
+       local name = Option[1]
+       if name and name ~= "" then
+           _G.Aliados[name] = true
+           Rayfield:Notify({
+               Title = "Aliado Adicionado",
+               Content = name .. " agora é seu aliado!",
+               Duration = 3,
+               Image = 4483362458,
+           })
+       end
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "🔄 Atualizar Lista de Jogadores",
+   Callback = function()
+       AllyDropdown:Refresh(GetPlayerNames(), true)
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "❌ Limpar Todos os Aliados",
+   Callback = function()
+       _G.Aliados = {}
+       Rayfield:Notify({
+           Title = "Lista Limpa",
+           Content = "O Aimbot agora mirará em todos novamente.",
+           Duration = 3,
+           Image = 4483362458,
+       })
+   end,
 })
 
 MainTab:CreateSection("Visuais & Cores")
@@ -117,48 +170,22 @@ MainTab:CreateSlider({
    Callback = function(Value) _G.JumpPower = Value end,
 })
 
-MainTab:CreateSection("Personalização do Script")
-
-MainTab:CreateColorPicker({
-    Name = "Cor de Destaque do Menu",
-    Color = Color3.fromRGB(0, 255, 0),
-    Callback = function(Value)
-        Window.ModifyTheme({AccentColor = Value})
-    end
-})
-
--- // SEÇÃO DE CRÉDITOS ATUALIZADA
 MainTab:CreateSection("Créditos")
 
 MainTab:CreateParagraph({
     Title = "👑 FEITO POR DANIEL & WELDERSON", 
-    Content = "Script definitivo otimizado para Delta Executor. Desenvolvido por Daniel e Welderson."
+    Content = "Script definitivo otimizado para Delta Executor."
 })
 
--- // SEÇÃO DISCORD
-MainTab:CreateSection("Comunidade")
-
-MainTab:CreateButton({
-   Name = "🔗 Copiar Discord (Verde)",
-   Callback = function()
-       setclipboard(_G.Discord)
-       Rayfield:Notify({
-           Title = "Link Copiado!",
-           Content = "O link do Discord foi copiado para sua área de transferência.",
-           Duration = 5,
-           Image = 4483362458,
-       })
-   end,
-})
-
--- // LÓGICA DE LOOP (AIMBOT / ESP)
+-- // LÓGICA DE LOOP
 local function GetClosestTarget()
     local target = nil
     local shortestDistance = math.huge
     local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 
     for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+        -- Verifica se não é aliado antes de mirar
+        if player ~= LocalPlayer and not _G.Aliados[player.Name] and player.Character and player.Character:FindFirstChild("Head") then
             local head = player.Character.Head
             local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
             if onScreen and IsVisible(head) then
@@ -198,7 +225,7 @@ end)
 
 Rayfield:Notify({
    Title = "ELITE HUB CARREGADO",
-   Content = "Créditos: Daniel & Welderson",
+   Content = "Sistema de Aliados Dinâmico Ativado!",
    Duration = 5,
    Image = 4483362458,
 })
