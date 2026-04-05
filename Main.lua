@@ -16,12 +16,12 @@ local Window = Rayfield:CreateWindow({
    KeySettings = {
       Title = "Chave Necessária",
       Subtitle = "A chave expira a cada 24 horas",
-      Note = "Clique no botão abaixo para copiar!",
+      Note = "Clique no botão abaixo para copiar o link!",
       FileName = "EliteKeyFile", 
-      SaveKey = true, -- SALVA POR 24H
+      SaveKey = true,
       Key = {KeyDoGitHub},
       Actions = {
-          [1] = {
+          {
               Text = "Copiar Link (Key)",
               OnPress = function()
                   setclipboard("https://linkvertise.com/access/4856817/SVCyV5atG9C1")
@@ -31,13 +31,13 @@ local Window = Rayfield:CreateWindow({
    }
 })
 
--- // ABA PRINCIPAL DO SCRIPT
+-- // ABA PRINCIPAL (O SCRIPT SÓ ABRE SE A KEY FOR CORRETA)
 local Tab = Window:CreateTab("Principal", 4483362458)
-Tab:CreateSection("Bem-vindo, " .. game.Players.LocalPlayer.Name)
+Tab:CreateSection("Bem-vindo ao Elite Hub V13")
 
 Tab:CreateButton({
-   Name = "Avisar que está funcionando",
+   Name = "Ativar Script",
    Callback = function()
-       Rayfield:Notify({Title = "Sucesso!", Content = "O Elite Hub foi carregado!", Duration = 5})
+       print("Script Ativado!")
    end,
 })
