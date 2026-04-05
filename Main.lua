@@ -1,6 +1,6 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- Esta linha conecta o seu script ao arquivo do GitHub que você criou
+-- Este link lê a chave que está no seu GitHub (Key.txt)
 local KeyDoGitHub = game:HttpGet("https://raw.githubusercontent.com/danieleneasbarreto13-bot/DanixHub/refs/heads/main/Key.txt")
 
 local Window = Rayfield:CreateWindow({
@@ -16,11 +16,11 @@ local Window = Rayfield:CreateWindow({
    KeySettings = {
       Title = "Sistema de Chave | Elite Hub",
       Subtitle = "A chave expira a cada 24 horas",
-      Note = "Pegue a chave no Linkvertise (Link no Discord)",
+      Note = "Pegue a chave aqui: https://linkvertise.com/access/4856817/SVCyV5atG9C1", 
       FileName = "EliteKeyFile", 
-      SaveKey = true, -- Mantém o usuário logado enquanto você não mudar a Key no GitHub
-      Key = {KeyDoGitHub} -- Aqui ele verifica se a key digitada é igual à do GitHub
+      SaveKey = true, -- Salva a chave no celular do usuário por 24h
+      Key = {KeyDoGitHub} 
    }
 })
 
--- O RESTANTE DO SEU CÓDIGO (VARIÁVEIS, TABS, ETC) VEM ABAIXO...
+-- // O RESTANTE DO SEU CÓDIGO (VARIÁVEIS, TABS, ETC) VEM ABAIXO...
