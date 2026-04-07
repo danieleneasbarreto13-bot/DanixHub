@@ -14,10 +14,8 @@ local _G = {
     EspColor = Color3.fromRGB(0, 255, 0),
     JumpEnabled = false,
     JumpPower = 50,
-    SpeedEnabled = false, -- Nova variável
-    SpeedValue = 16,      -- Velocidade padrão
     Discord = "https://discord.gg/8R5wd4MDR",
-    Aliados = {} 
+    Aliados = {} -- Tabela de aliados
 }
 
 local Camera = workspace.CurrentCamera
@@ -85,7 +83,7 @@ MainTab:CreateToggle({
    Callback = function(Value) _G.Aimbot = Value end,
 })
 
--- // SEÇÃO DE ALIADOS
+-- // SEÇÃO DE ALIADOS COM DROPDOWN DINÂMICO
 MainTab:CreateSection("Sistema de Aliados")
 
 local function GetPlayerNames()
@@ -129,6 +127,12 @@ MainTab:CreateButton({
    Name = "❌ Limpar Todos os Aliados",
    Callback = function()
        _G.Aliados = {}
+       Rayfield:Notify({
+           Title = "Lista Limpa",
+           Content = "O Aimbot agora mirará em todos novamente.",
+           Duration = 3,
+           Image = 4483362458,
+       })
    end,
 })
 
@@ -146,28 +150,7 @@ MainTab:CreateColorPicker({
     Callback = function(Value) _G.EspColor = Value end
 })
 
--- // SEÇÃO DE MOVIMENTAÇÃO (ATUALIZADA)
-MainTab:CreateSection("Movimentação & Speed")
-
-MainTab:CreateToggle({
-   Name = "Ativar Speed Hack (Bypass)",
-   CurrentValue = false,
-   Callback = function(Value) 
-       _G.SpeedEnabled = Value 
-       if not Value and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-           LocalPlayer.Character.Humanoid.WalkSpeed = 16 -- Reseta ao desligar
-       end
-   end,
-})
-
-MainTab:CreateSlider({
-   Name = "Velocidade",
-   Range = {16, 200},
-   Increment = 1,
-   Suffix = " Studs",
-   CurrentValue = 16,
-   Callback = function(Value) _G.SpeedValue = Value end,
-})
+MainTab:CreateSection("Movimentação")
 
 MainTab:CreateToggle({
    Name = "Mostrar Botão de Pulo",
@@ -180,7 +163,7 @@ MainTab:CreateToggle({
 
 MainTab:CreateSlider({
    Name = "Força do Pulo",
-   Range = {1, 150},
+   Range = {1, 100},
    Increment = 1,
    Suffix = " Power",
    CurrentValue = 50,
@@ -201,6 +184,7 @@ local function GetClosestTarget()
     local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 
     for _, player in pairs(Players:GetPlayers()) do
+        -- Verifica se não é aliado antes de mirar
         if player ~= LocalPlayer and not _G.Aliados[player.Name] and player.Character and player.Character:FindFirstChild("Head") then
             local head = player.Character.Head
             local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
@@ -217,7 +201,6 @@ local function GetClosestTarget()
 end
 
 RunService.RenderStepped:Connect(function()
-    -- Lógica Aimbot
     if _G.Aimbot then
         local target = GetClosestTarget()
         if target then
@@ -225,7 +208,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
     
-    -- Lógica ESP
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character then
             local hl = p.Character:FindFirstChild("EliteHL")
@@ -239,12 +221,11 @@ RunService.RenderStepped:Connect(function()
             elseif hl then hl:Destroy() end
         end
     end
+end)
 
-    -- // LÓGICA SPEED BYPASS (ANTI-BACK)
-    if _G.SpeedEnabled then
-        local char = LocalPlayer.Character
-        if char and char:FindFirstChild("Humanoid") then
-            -- Força a velocidade em cada frame para o servidor não resetar
-            char.Humanoid.WalkSpeed = _G.SpeedValue
-            
-            -- Se estiver se movendo, mantém o estado
+Rayfield:Notify({
+   Title = "ELITE HUB CARREGADO",
+   Content = "Sistema de Aliados Dinâmico Ativado!",
+   Duration = 5,
+   Image = 4483362458,
+})
