@@ -1,25 +1,50 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- Variáveis de Controle
+-- // VARIÁVEIS DE CONTROLE e CONFIGURAÇÕES
 local _G = {
     Aimbot = false,
+    AimbotTarget = "Head", -- Head ou HumanoidRootPart
+    Smoothness = 1, -- Quanto maior, mais suave e "legit" fica a mira
+    UseFOV = true,
+    FOVRadius = 150,
+    FOVColor = Color3.fromRGB(255, 0, 0),
+    
     Esp = false,
-    EspColor = Color3.fromRGB(0, 255, 0),
+    EspColor = Color3.fromRGB(255, 0, 0),
+    Aliados = {},
+    
     JumpEnabled = false,
     JumpPower = 50,
-    Discord = "https://discord.gg/VWbCUddZ5",
-    Aliados = {} -- Tabela de aliados para não focar no Aimbot/ESP
+    Discord = "https://discord.gg/VWbCUddZ5"
 }
 
 local Camera = workspace.CurrentCamera
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
--- Criando a Janela do Rayfield
+-- // DESENHO DO CÍRCULO DE FOV (Field of View)
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+FOVCircle.Radius = _G.FOVRadius
+FOVCircle.Color = _G.FOVColor
+FOVCircle.Thickness = 1
+FOVCircle.Filled = false
+FOVCircle.Visible = _G.UseFOV
+
+-- Atualiza a posição do círculo de FOV na tela continuamente
+RunService.RenderStepped:Connect(function()
+    FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    FOVCircle.Radius = _G.FOVRadius
+    FOVCircle.Color = _G.FOVColor
+    FOVCircle.Visible = (_G.UseFOV and _G.Aimbot)
+end)
+
+-- // CRIANDO A JANELA PRINCIPAL
 local Window = Rayfield:CreateWindow({
-   Name = "🕸️ VÓRTEX SCRIPT 🕸️",
-   LoadingTitle = "Carregando Sistema Completo...",
+   Name = "🕸️ VÓRTEX SCRIPT V2 🕸️",
+   LoadingTitle = "Carregando Módulo de Combate...",
    LoadingSubtitle = "Créditos: 👑 DANIEL & WELDERSON 👑",
    ConfigurationSaving = { Enabled = false }
 })
@@ -33,7 +58,7 @@ local Arrow = Instance.new("TextLabel")
 JumpBtn.Name = "VortexJumpBtn"
 JumpBtn.Parent = ScreenGui
 JumpBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-JumpBtn.Position = UDim2.new(0.8, 0, 0.5, 0) -- Ajustado para o canto direito (melhor para celular)
+JumpBtn.Position = UDim2.new(0.8, 0, 0.5, 0)
 JumpBtn.Size = UDim2.new(0, 65, 0, 65)
 JumpBtn.Text = ""
 JumpBtn.Visible = false
@@ -47,11 +72,10 @@ Arrow.Parent = JumpBtn
 Arrow.Size = UDim2.new(1, 0, 1, 0)
 Arrow.BackgroundTransparency = 1
 Arrow.Text = "↑"
-Arrow.TextColor3 = Color3.fromRGB(0, 255, 0)
+Arrow.TextColor3 = Color3.fromRGB(255, 0, 0)
 Arrow.TextSize = 45
 Arrow.Font = Enum.Font.SourceSansBold
 
--- Função do clique do Botão de Pulo
 JumpBtn.MouseButton1Click:Connect(function()
     if _G.JumpEnabled then
         local Char = LocalPlayer.Character
@@ -63,7 +87,7 @@ JumpBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- // FUNÇÃO DE VERIFICAÇÃO DE PAREDE (WALL CHECK)
+-- // VERIFICAÇÃO DE VISIBILIDADE (WALL CHECK)
 local function IsVisible(targetPart)
     local character = LocalPlayer.Character
     if not character then return false end
@@ -85,28 +109,29 @@ local function IsVisible(targetPart)
         end
         return false
     end
-    
     return true
 end
 
--- // LÓGICA DO AIMBOT (Procura o jogador visível mais próximo da mira)
+-- // SELEÇÃO DO ALVO MAIS PRÓXIMO DA MIRA (DENTRO DO FOV)
 local function GetClosestPlayer()
     local closestPlayer = nil
     local shortestDistance = math.huge
 
     for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
-            -- 1. Verifica se não é aliado
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(_G.AimbotTarget) and player.Character:FindFirstChildOfClass("Humanoid") and player.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
             if not table.find(_G.Aliados, player.Name) then
-                -- 2. Verifica se o inimigo está visível
-                if IsVisible(player.Character.Head) then
-                    local pos, onScreen = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
-                    -- 3. Verifica se está na tela
+                if IsVisible(player.Character[_G.AimbotTarget]) then
+                    local pos, onScreen = Camera:WorldToViewportPoint(player.Character[_G.AimbotTarget].Position)
                     if onScreen then
-                        local distance = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)).Magnitude
-                        if distance < shortestDistance then
-                            closestPlayer = player
-                            shortestDistance = distance
+                        local mousePos = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+                        local distance = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                        
+                        -- Se o FOV estiver ativado, só foca se estiver dentro do círculo
+                        if not _G.UseFOV or distance <= _G.FOVRadius then
+                            if distance < shortestDistance then
+                                closestPlayer = player
+                                shortestDistance = distance
+                            end
                         end
                     end
                 end
@@ -116,17 +141,19 @@ local function GetClosestPlayer()
     return closestPlayer
 end
 
--- Render do Aimbot
+-- // LOOP DE EXECUÇÃO DO AIMBOT (COM SUAVIDADE)
 RunService.RenderStepped:Connect(function()
     if _G.Aimbot then
         local target = GetClosestPlayer()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position)
+        if target and target.Character and target.Character:FindFirstChild(_G.AimbotTarget) then
+            local targetPos = target.Character[_G.AimbotTarget].Position
+            -- Interpolação (Lerp) para suavizar a câmera
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), 1 / _G.Smoothness)
         end
     end
 end)
 
--- // LÓGICA DO ESP (Highlight de Silhueta)
+-- // SISTEMA DE ESP (HIGHLIGHTS)
 local function CreateESP(player)
     local function ApplyESP()
         if player == LocalPlayer then return end
@@ -142,8 +169,8 @@ local function CreateESP(player)
         highlight.Name = "VortexESP"
         highlight.Parent = char
         highlight.Adornee = char
-        highlight.FillTransparency = 0.5
-        highlight.OutlineTransparency = 0
+        highlight.FillTransparency = 0.6
+        highlight.OutlineTransparency = 0.1
         
         if table.find(_G.Aliados, player.Name) then
             highlight.FillColor = Color3.fromRGB(0, 0, 255)
@@ -160,13 +187,12 @@ local function CreateESP(player)
     player.CharacterAdded:Connect(ApplyESP)
 end
 
--- Ativa o ESP para quem já está no servidor e para quem entrar
+-- Inicializa ESP para players existentes e futuros
 for _, player in pairs(Players:GetPlayers()) do
     CreateESP(player)
 end
 Players.PlayerAdded:Connect(CreateESP)
 
--- Atualiza o estado visual do ESP dinamicamente
 local function UpdateESPState()
     for _, player in pairs(Players:GetPlayers()) do
         if player.Character and player.Character:FindFirstChild("VortexESP") then
@@ -182,20 +208,77 @@ local function UpdateESPState()
     end
 end
 
--- // ABA ÚNICA (TODAS AS OPÇÕES JUNTAS)
+-- // CONSTRUÇÃO DA ABA DA INTERFACE
 local TabPrincipal = Window:CreateTab("Principal", 4483362458)
 
 -- [ SEÇÃO: COMBATE ]
-TabPrincipal:CreateSection("Combate & Trapaças")
+TabPrincipal:CreateSection("Aimbot & Ajustes")
 
 TabPrincipal:CreateToggle({
-    Name = "Aimbot (Segurar Mira + WallCheck)",
+    Name = "Ativar Aimbot",
     CurrentValue = false,
     Flag = "ToggleAimbot",
     Callback = function(Value)
         _G.Aimbot = Value
     end,
 })
+
+TabPrincipal:CreateDropdown({
+    Name = "Parte do Corpo Alvo",
+    Options = {"Head", "HumanoidRootPart"},
+    CurrentOption = {"Head"},
+    MultipleOptions = false,
+    Flag = "DropdownTarget",
+    Callback = function(Option)
+        _G.AimbotTarget = Option[1]
+    end,
+})
+
+TabPrincipal:CreateSlider({
+    Name = "Suavidade do Aimbot (1 = Instantâneo)",
+    Range = {1, 15},
+    Increment = 1,
+    CurrentValue = 1,
+    Flag = "SliderSmooth",
+    Callback = function(Value)
+        _G.Smoothness = Value
+    end,
+})
+
+-- [ SEÇÃO: CONFIGURAÇÕES DE FOV ]
+TabPrincipal:CreateSection("Configurações do FOV (Círculo de Mira)")
+
+TabPrincipal:CreateToggle({
+    Name = "Mostrar Círculo de FOV",
+    CurrentValue = true,
+    Flag = "ToggleFOV",
+    Callback = function(Value)
+        _G.UseFOV = Value
+    end,
+})
+
+TabPrincipal:CreateSlider({
+    Name = "Tamanho do FOV",
+    Range = {50, 600},
+    Increment = 10,
+    CurrentValue = 150,
+    Flag = "SliderFOVSize",
+    Callback = function(Value)
+        _G.FOVRadius = Value
+    end,
+})
+
+TabPrincipal:CreateColorPicker({
+    Name = "Cor do Círculo de FOV",
+    Color = Color3.fromRGB(255, 0, 0),
+    Flag = "ColorFOV",
+    Callback = function(Value)
+        _G.FOVColor = Value
+    end,
+})
+
+-- [ SEÇÃO: ESP (WALLHACK) ]
+TabPrincipal:CreateSection("Visual (ESP)")
 
 TabPrincipal:CreateToggle({
     Name = "Ativar ESP (Wallhack)",
@@ -209,7 +292,7 @@ TabPrincipal:CreateToggle({
 
 TabPrincipal:CreateColorPicker({
     Name = "Cor do ESP Inimigo",
-    Color = Color3.fromRGB(0, 255, 0),
+    Color = Color3.fromRGB(255, 0, 0),
     Flag = "ColorESP",
     Callback = function(Value)
         _G.EspColor = Value
