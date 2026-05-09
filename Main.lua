@@ -1,9 +1,9 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "ELITE V13 | DANIEL HUB",
+   Name = "🕸️ VÓRTEX SCRIPT 🕸️",
    LoadingTitle = "Carregando Sistema Completo...",
-   LoadingSubtitle = "Créditos: DANIEL & WELDERSON",
+   LoadingSubtitle = "Créditos: 👑DANIEL 👑",
    ConfigurationSaving = { Enabled = false }
 })
 
@@ -29,7 +29,7 @@ local JumpBtn = Instance.new("TextButton")
 local UICorner = Instance.new("UICorner")
 local Arrow = Instance.new("TextLabel")
 
-JumpBtn.Name = "DanielJumpBtn"
+JumpBtn.Name = "VortexJumpBtn"
 JumpBtn.Parent = ScreenGui
 JumpBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 JumpBtn.Position = UDim2.new(0.5, 0, 0.8, 0)
@@ -173,7 +173,7 @@ MainTab:CreateSlider({
 MainTab:CreateSection("Créditos")
 
 MainTab:CreateParagraph({
-    Title = "👑 FEITO POR DANIEL & WELDERSON", 
+    Title = "👑 FEITO POR 👑DANIEL 👑", 
     Content = "Script definitivo otimizado para Delta Executor."
 })
 
@@ -224,7 +224,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 Rayfield:Notify({
-   Title = "ELITE HUB CARREGADO",
+   Title = "VÓRTEX SCRIPT CARREGADO",
    Content = "Sistema de Aliados Dinâmico Ativado!",
    Duration = 5,
    Image = 4483362458,
