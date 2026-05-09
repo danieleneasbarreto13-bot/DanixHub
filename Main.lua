@@ -1,21 +1,29 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 -- // VARIÁVEIS DE CONTROLE e CONFIGURAÇÕES
 local _G = {
     Aimbot = false,
     AimbotTarget = "Head", -- Head ou HumanoidRootPart
-    Smoothness = 1, -- Quanto maior, mais suave e "legit" fica a mira
+    Smoothness = 1, -- Quanto maior, mais suave fica a mira
     UseFOV = true,
     FOVRadius = 150,
     FOVColor = Color3.fromRGB(255, 0, 0),
+    WallCheck = true, -- Ativado por padrão (mira não puxa através da parede)
     
     Esp = false,
     EspColor = Color3.fromRGB(255, 0, 0),
     Aliados = {},
     
+    -- Configurações de Movimento
     JumpEnabled = false,
     JumpPower = 50,
-    Discord = "https://discord.gg/VWbCUddZ5"
+    WalkSpeedEnabled = false,
+    WalkSpeedValue = 16, -- Velocidade padrão do Roblox
+
+    Discord = "https://discord.gg/VWbCUddZ5",
+
+    -- Variável de personalização profissional da UI
+    InterfaceColor = Color3.fromRGB(255, 0, 0) -- Começa com o Vermelho padrão
 }
 
 local Camera = workspace.CurrentCamera
@@ -23,6 +31,7 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 
 -- // DESENHO DO CÍRCULO DE FOV (Field of View)
 local FOVCircle = Drawing.new("Circle")
@@ -41,40 +50,139 @@ RunService.RenderStepped:Connect(function()
     FOVCircle.Visible = (_G.UseFOV and _G.Aimbot)
 end)
 
--- // CRIANDO A JANELA PRINCIPAL
-local Window = Rayfield:CreateWindow({
-   Name = "🕸️ VÓRTEX SCRIPT V2 🕸️",
-   LoadingTitle = "Carregando Módulo de Combate...",
-   LoadingSubtitle = "Créditos: 👑 DANIEL & WELDERSON 👑",
-   ConfigurationSaving = { Enabled = false }
+-- // CRIANDO A JANELA PRINCIPAL (FLUENT UI)
+local Window = Fluent:CreateWindow({
+    Title = "VÓRTEX SCRIPT V2",
+    SubTitle = "by Daniel",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = false, -- Desativado para evitar telas pretas/brancas e melhorar o desempenho mobile
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.RightControl -- Tecla para ocultar/mostrar no PC
 })
 
+-- Aguarda a janela ser completamente criada no motor do jogo antes de carregar o resto
+task.wait(0.5)
+
+-- // FUNÇÃO AUXILIAR PARA TORNAR ELEMENTOS ARRASTÁVEIS NO MOBILE
+local function MakeDraggable(guiObject)
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
+
+    local function update(input)
+        local delta = input.Position - dragStart
+        guiObject.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+
+    guiObject.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = guiObject.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    guiObject.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
+        end
+    end)
+end
+
+-- // BOTÃO FLUTUANTE PARA ABRIR/FECHAR MENU (MOBILE)
+local MobileGui = Instance.new("ScreenGui")
+MobileGui.Name = "VortexMobileUI"
+MobileGui.Parent = CoreGui
+MobileGui.ResetOnSpawn = false
+
+local ToggleMenuBtn = Instance.new("TextButton")
+ToggleMenuBtn.Name = "ToggleMenuBtn"
+ToggleMenuBtn.Parent = MobileGui
+ToggleMenuBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+ToggleMenuBtn.Position = UDim2.new(0.1, 0, 0.15, 0)
+ToggleMenuBtn.Size = UDim2.new(0, 60, 0, 60)
+ToggleMenuBtn.Text = "🕸️"
+ToggleMenuBtn.TextColor3 = _G.InterfaceColor
+ToggleMenuBtn.TextSize = 30
+ToggleMenuBtn.Font = Enum.Font.SourceSansBold
+ToggleMenuBtn.BorderSizePixel = 0
+ToggleMenuBtn.ZIndex = 10
+
+local BtnCorner = Instance.new("UICorner")
+BtnCorner.CornerRadius = UDim.new(1, 0)
+BtnCorner.Parent = ToggleMenuBtn
+
+local BtnStroke = Instance.new("UIStroke")
+BtnStroke.Color = _G.InterfaceColor
+BtnStroke.Thickness = 2.5
+BtnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+BtnStroke.Parent = ToggleMenuBtn
+
+-- Torna o botão de abrir/fechar arrastável
+MakeDraggable(ToggleMenuBtn)
+
+-- Função do clique do botão para abrir/fechar
+local menuOpen = true
+ToggleMenuBtn.MouseButton1Click:Connect(function()
+    menuOpen = not menuOpen
+    Window:Minimize(not menuOpen)
+    
+    -- Efeito visual de clique profissional
+    ToggleMenuBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    task.wait(0.1)
+    ToggleMenuBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+end)
+
 -- // INTERFACE DO BOTÃO DE PULO (MÓVEL)
-local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.ResetOnSpawn = false
+
 local JumpBtn = Instance.new("TextButton")
 local UICorner = Instance.new("UICorner")
 local Arrow = Instance.new("TextLabel")
 
 JumpBtn.Name = "VortexJumpBtn"
 JumpBtn.Parent = ScreenGui
-JumpBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+JumpBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 JumpBtn.Position = UDim2.new(0.8, 0, 0.5, 0)
 JumpBtn.Size = UDim2.new(0, 65, 0, 65)
 JumpBtn.Text = ""
 JumpBtn.Visible = false
 JumpBtn.Active = true
-JumpBtn.Draggable = true 
 
 UICorner.CornerRadius = UDim.new(1, 0)
 UICorner.Parent = JumpBtn
+
+local JumpStroke = Instance.new("UIStroke")
+JumpStroke.Color = _G.InterfaceColor
+JumpStroke.Thickness = 2.5
+JumpStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+JumpStroke.Parent = JumpBtn
 
 Arrow.Parent = JumpBtn
 Arrow.Size = UDim2.new(1, 0, 1, 0)
 Arrow.BackgroundTransparency = 1
 Arrow.Text = "↑"
-Arrow.TextColor3 = Color3.fromRGB(255, 0, 0)
+Arrow.TextColor3 = _G.InterfaceColor
 Arrow.TextSize = 45
 Arrow.Font = Enum.Font.SourceSansBold
+
+-- Torna o botão de pulo arrastável
+MakeDraggable(JumpBtn)
 
 JumpBtn.MouseButton1Click:Connect(function()
     if _G.JumpEnabled then
@@ -83,33 +191,55 @@ JumpBtn.MouseButton1Click:Connect(function()
             local humanoid = Char:FindFirstChildOfClass("Humanoid")
             humanoid.JumpPower = _G.JumpPower
             humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            
+            -- Efeito visual de clique profissional
+            JumpBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            task.wait(0.1)
+            JumpBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+        end
+    end
+end)
+
+-- // FUNÇÃO PROFISSIONAL PARA MUDAR CORES DA INTERFACE DO JOGO
+local function UpdateUITheme(newColor)
+    _G.InterfaceColor = newColor
+    
+    -- Mudança em tempo real e de forma segura nas propriedades dos botões mobile
+    if ToggleMenuBtn and BtnStroke then
+        ToggleMenuBtn.TextColor3 = newColor
+        BtnStroke.Color = newColor
+    end
+    
+    if JumpBtn and JumpStroke and Arrow then
+        JumpStroke.Color = newColor
+        Arrow.TextColor3 = newColor
+    end
+end
+
+-- // LOOP RECORRENTE PARA MANTER O WALKSPEED ATIVO (Evita resets ao morrer)
+RunService.Heartbeat:Connect(function()
+    if _G.WalkSpeedEnabled then
+        local Char = LocalPlayer.Character
+        if Char and Char:FindFirstChildOfClass("Humanoid") then
+            Char:FindFirstChildOfClass("Humanoid").WalkSpeed = _G.WalkSpeedValue
         end
     end
 end)
 
 -- // VERIFICAÇÃO DE VISIBILIDADE (WALL CHECK)
-local function IsVisible(targetPart)
+local function IsVisible(targetPart, targetCharacter)
+    if not _G.WallCheck then return true end
+    
     local character = LocalPlayer.Character
     if not character then return false end
     
-    local raycastParams = RaycastParams.new()
-    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
-    raycastParams.FilterDescendantsInstances = {character, Camera}
-    raycastParams.IgnoreWater = true
-
-    local origin = Camera.CFrame.Position
-    local direction = targetPart.Position - origin
-
-    local raycastResult = workspace:Raycast(origin, direction, raycastParams)
-
-    if raycastResult then
-        local hitInstance = raycastResult.Instance
-        if hitInstance:IsDescendantOf(targetPart.Parent) then
-            return true
-        end
-        return false
+    local ignoreList = {character, Camera}
+    if targetCharacter then
+        table.insert(ignoreList, targetCharacter)
     end
-    return true
+    
+    local parts = Camera:GetPartsObscuringTarget({targetPart.Position}, ignoreList)
+    return #parts == 0
 end
 
 -- // SELEÇÃO DO ALVO MAIS PRÓXIMO DA MIRA (DENTRO DO FOV)
@@ -120,13 +250,13 @@ local function GetClosestPlayer()
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(_G.AimbotTarget) and player.Character:FindFirstChildOfClass("Humanoid") and player.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
             if not table.find(_G.Aliados, player.Name) then
-                if IsVisible(player.Character[_G.AimbotTarget]) then
-                    local pos, onScreen = Camera:WorldToViewportPoint(player.Character[_G.AimbotTarget].Position)
+                local targetPart = player.Character[_G.AimbotTarget]
+                if IsVisible(targetPart, player.Character) then
+                    local pos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
                     if onScreen then
                         local mousePos = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
                         local distance = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
                         
-                        -- Se o FOV estiver ativado, só foca se estiver dentro do círculo
                         if not _G.UseFOV or distance <= _G.FOVRadius then
                             if distance < shortestDistance then
                                 closestPlayer = player
@@ -141,13 +271,12 @@ local function GetClosestPlayer()
     return closestPlayer
 end
 
--- // LOOP DE EXECUÇÃO DO AIMBOT (COM SUAVIDADE)
+-- // LOOP DE EXECUÇÃO DO AIMBOT
 RunService.RenderStepped:Connect(function()
     if _G.Aimbot then
         local target = GetClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild(_G.AimbotTarget) then
             local targetPos = target.Character[_G.AimbotTarget].Position
-            -- Interpolação (Lerp) para suavizar a câmera
             Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), 1 / _G.Smoothness)
         end
     end
@@ -187,7 +316,7 @@ local function CreateESP(player)
     player.CharacterAdded:Connect(ApplyESP)
 end
 
--- Inicializa ESP para players existentes e futuros
+-- Inicializa ESP para players
 for _, player in pairs(Players:GetPlayers()) do
     CreateESP(player)
 end
@@ -208,169 +337,224 @@ local function UpdateESPState()
     end
 end
 
--- // CONSTRUÇÃO DA ABA DA INTERFACE
-local TabPrincipal = Window:CreateTab("Principal", 4483362458)
+-- // CRIAÇÃO DAS ABAS NA INTERFACE FLUENT (Com pequena folga para evitar gargalo)
+local Tabs = {
+    Combate = Window:AddTab({ Title = "Combate", Icon = "crosshair" }),
+    Visual = Window:AddTab({ Title = "Visual & ESP", Icon = "eye" }),
+    Movimento = Window:AddTab({ Title = "Movimento", Icon = "zap" }),
+    Outros = Window:AddTab({ Title = "Config & Social", Icon = "settings" })
+}
 
--- [ SEÇÃO: COMBATE ]
-TabPrincipal:CreateSection("Aimbot & Ajustes")
+task.wait(0.2)
 
-TabPrincipal:CreateToggle({
-    Name = "Ativar Aimbot",
-    CurrentValue = false,
-    Flag = "ToggleAimbot",
+-- [ ABA: COMBATE ]
+Tabs.Combate:AddSection("Configurações do Aimbot")
+
+local AimbotToggle = Tabs.Combate:AddToggle("AimbotToggle", {Title = "Ativar Aimbot", Default = false})
+AimbotToggle:OnChanged(function(Value)
+    _G.Aimbot = Value
+end)
+
+local WallCheckToggle = Tabs.Combate:AddToggle("WallCheckToggle", {Title = "Verificar Paredes (Wall Check)", Default = true})
+WallCheckToggle:OnChanged(function(Value)
+    _G.WallCheck = Value
+end)
+
+local TargetDropdown = Tabs.Combate:AddDropdown("TargetDropdown", {
+    Title = "Parte do Corpo Alvo",
+    Values = {"Head", "HumanoidRootPart"},
+    CurrentValue = "Head",
     Callback = function(Value)
-        _G.Aimbot = Value
-    end,
+        _G.AimbotTarget = Value
+    end
 })
 
-TabPrincipal:CreateDropdown({
-    Name = "Parte do Corpo Alvo",
-    Options = {"Head", "HumanoidRootPart"},
-    CurrentOption = {"Head"},
-    MultipleOptions = false,
-    Flag = "DropdownTarget",
-    Callback = function(Option)
-        _G.AimbotTarget = Option[1]
-    end,
-})
-
-TabPrincipal:CreateSlider({
-    Name = "Suavidade do Aimbot (1 = Instantâneo)",
-    Range = {1, 15},
-    Increment = 1,
-    CurrentValue = 1,
-    Flag = "SliderSmooth",
+local SmoothSlider = Tabs.Combate:AddSlider("SmoothSlider", {
+    Title = "Suavidade do Aimbot",
+    Description = "Ajusta o atraso da mira (Legit)",
+    Min = 1,
+    Max = 15,
+    Default = 1,
+    Rounding = 0,
     Callback = function(Value)
         _G.Smoothness = Value
-    end,
+    end
 })
 
--- [ SEÇÃO: CONFIGURAÇÕES DE FOV ]
-TabPrincipal:CreateSection("Configurações do FOV (Círculo de Mira)")
+Tabs.Combate:AddSection("Círculo de FOV")
 
-TabPrincipal:CreateToggle({
-    Name = "Mostrar Círculo de FOV",
-    CurrentValue = true,
-    Flag = "ToggleFOV",
-    Callback = function(Value)
-        _G.UseFOV = Value
-    end,
-})
+local FOVToggle = Tabs.Combate:AddToggle("FOVToggle", {Title = "Ativar Círculo de FOV", Default = true})
+FOVToggle:OnChanged(function(Value)
+    _G.UseFOV = Value
+end)
 
-TabPrincipal:CreateSlider({
-    Name = "Tamanho do FOV",
-    Range = {50, 600},
-    Increment = 10,
-    CurrentValue = 150,
-    Flag = "SliderFOVSize",
+local FOVSlider = Tabs.Combate:AddSlider("FOVSlider", {
+    Title = "Tamanho do FOV",
+    Min = 50,
+    Max = 600,
+    Default = 150,
+    Rounding = 0,
     Callback = function(Value)
         _G.FOVRadius = Value
-    end,
+    end
 })
 
-TabPrincipal:CreateColorPicker({
-    Name = "Cor do Círculo de FOV",
-    Color = Color3.fromRGB(255, 0, 0),
-    Flag = "ColorFOV",
+local FOVColorPicker = Tabs.Combate:AddColorpicker("FOVColorPicker", {
+    Title = "Cor do FOV",
+    Default = Color3.fromRGB(255, 0, 0),
     Callback = function(Value)
         _G.FOVColor = Value
-    end,
+    end
 })
 
--- [ SEÇÃO: ESP (WALLHACK) ]
-TabPrincipal:CreateSection("Visual (ESP)")
+task.wait(0.1)
 
-TabPrincipal:CreateToggle({
-    Name = "Ativar ESP (Wallhack)",
-    CurrentValue = false,
-    Flag = "ToggleESP",
-    Callback = function(Value)
-        _G.Esp = Value
-        UpdateESPState()
-    end,
-})
+-- [ ABA: VISUAL ]
+Tabs.Visual:AddSection("ESP / Wallhack")
 
-TabPrincipal:CreateColorPicker({
-    Name = "Cor do ESP Inimigo",
-    Color = Color3.fromRGB(255, 0, 0),
-    Flag = "ColorESP",
+local ESPToggle = Tabs.Visual:AddToggle("ESPToggle", {Title = "Ativar ESP Highlight", Default = false})
+ESPToggle:OnChanged(function(Value)
+    _G.Esp = Value
+    UpdateESPState()
+end)
+
+local ESPColorPicker = Tabs.Visual:AddColorpicker("ESPColorPicker", {
+    Title = "Cor do ESP Inimigo",
+    Default = Color3.fromRGB(255, 0, 0),
     Callback = function(Value)
         _G.EspColor = Value
         UpdateESPState()
-    end,
+    end
 })
 
--- [ SEÇÃO: MOVIMENTAÇÃO ]
-TabPrincipal:CreateSection("Movimentação")
+task.wait(0.1)
 
-TabPrincipal:CreateToggle({
-    Name = "Botão de Pulo (Mobile)",
-    CurrentValue = false,
-    Flag = "ToggleJumpButton",
+-- [ ABA: MOVIMENTO ]
+Tabs.Movimento:AddSection("Controles de Movimento")
+
+-- WalkSpeed Toggle
+local SpeedToggle = Tabs.Movimento:AddToggle("SpeedToggle", {Title = "Ativar Velocidade (WalkSpeed)", Default = false})
+SpeedToggle:OnChanged(function(Value)
+    _G.WalkSpeedEnabled = Value
+    if not Value then
+        -- Se desligar, restaura a velocidade natural do jogador
+        local Char = LocalPlayer.Character
+        if Char and Char:FindFirstChildOfClass("Humanoid") then
+            Char:FindFirstChildOfClass("Humanoid").WalkSpeed = 16
+        end
+    end
+end)
+
+-- WalkSpeed Slider com Contador Integrado
+local SpeedSlider = Tabs.Movimento:AddSlider("SpeedSlider", {
+    Title = "Velocidade do Jogador",
+    Description = "Aumenta a velocidade do seu boneco",
+    Min = 16,
+    Max = 250,
+    Default = 16,
+    Rounding = 0, -- Sem números quebrados
     Callback = function(Value)
-        _G.JumpEnabled = Value
-        JumpBtn.Visible = Value
-    end,
+        _G.WalkSpeedValue = Value
+    end
 })
 
-TabPrincipal:CreateSlider({
-    Name = "Força do Pulo",
-    Range = {50, 200},
-    Increment = 5,
-    CurrentValue = 50,
-    Flag = "SliderJump",
+-- Botão de pulo para Mobile
+local JumpToggle = Tabs.Movimento:AddToggle("JumpToggle", {Title = "Botão de Pulo (Mobile)", Default = false})
+JumpToggle:OnChanged(function(Value)
+    _G.JumpEnabled = Value
+    JumpBtn.Visible = Value
+end)
+
+local JumpSlider = Tabs.Movimento:AddSlider("JumpSlider", {
+    Title = "Força do Pulo",
+    Min = 50,
+    Max = 200,
+    Default = 50,
+    Rounding = 0,
     Callback = function(Value)
         _G.JumpPower = Value
-    end,
+    end
 })
 
--- [ SEÇÃO: SISTEMA DE ALIADOS ]
-TabPrincipal:CreateSection("Sistema de Aliados")
+task.wait(0.1)
 
-TabPrincipal:CreateInput({
-    Name = "Adicionar Aliado",
-    PlaceholderText = "Digite o nome exato do player...",
-    RemoveTextAfterFocusLost = true,
+-- [ ABA: CONFIGS & SOCIAL ]
+Tabs.Outros:AddSection("Sistema de Aliados")
+
+local InputAliado = Tabs.Outros:AddInput("InputAliado", {
+    Title = "Adicionar Aliado",
+    Default = "",
+    Placeholder = "Nome exato...",
+    Numeric = false,
+    Finished = true,
     Callback = function(Text)
         if Text ~= "" and not table.find(_G.Aliados, Text) then
             table.insert(_G.Aliados, Text)
-            Rayfield:Notify({
-                Title = "Aliado Adicionado",
-                Content = Text .. " agora é seu aliado!",
-                Duration = 3,
-                Image = 4483362458,
+            Fluent:Notify({
+                Title = "Aliado Adicionado!",
+                Content = Text .. " foi adicionado à lista.",
+                Duration = 3
             })
             UpdateESPState()
         end
-    end,
+    end
 })
 
-TabPrincipal:CreateButton({
-    Name = "Limpar Todos os Aliados",
+Tabs.Outros:AddButton({
+    Title = "Limpar Todos os Aliados",
     Callback = function()
         _G.Aliados = {}
-        Rayfield:Notify({
-            Title = "Aliados Resetados",
-            Content = "Lista de aliados limpa com sucesso.",
-            Duration = 3,
-            Image = 4483362458,
+        Fluent:Notify({
+            Title = "Lista Limpa",
+            Content = "Todos os aliados foram removidos.",
+            Duration = 3
         })
         UpdateESPState()
-    end,
+    end
 })
 
--- [ SEÇÃO: COMUNIDADE ]
-TabPrincipal:CreateSection("Comunidade")
+-- SEÇÃO: PERSONALIZAÇÃO DE CORES DA UI
+Tabs.Outros:AddSection("Personalização do Menu")
 
-TabPrincipal:CreateButton({
-    Name = "Copiar Link do Discord",
+local ThemeDropdown = Tabs.Outros:AddDropdown("ThemeDropdown", {
+    Title = "Tema Visual do Menu",
+    Description = "Muda a cor de fundo e detalhes principais do Menu",
+    Values = {"Dark", "Light", "Amethyst", "Aqua"},
+    CurrentValue = "Dark",
+    Callback = function(Value)
+        Window:SetTheme(Value)
+    end
+})
+
+local UIColorsPicker = Tabs.Outros:AddColorpicker("UIColorsPicker", {
+    Title = "Cor dos Botões Externos",
+    Description = "Selecione a cor de realce dos botões de tela (Atalho e Pulo)",
+    Default = Color3.fromRGB(255, 0, 0),
+    Callback = function(Value)
+        UpdateUITheme(Value)
+    end
+})
+
+Tabs.Outros:AddSection("Comunidade")
+
+Tabs.Outros:AddButton({
+    Title = "Copiar Link do Discord",
     Callback = function()
         setclipboard(_G.Discord)
-        Rayfield:Notify({
-            Title = "Discord Copiado!",
-            Content = "O link do convite foi copiado para sua área de transferência.",
-            Duration = 5,
-            Image = 4483362458,
+        Fluent:Notify({
+            Title = "Copiado!",
+            Content = "O convite do Discord foi copiado.",
+            Duration = 5
         })
-    end,
+    end
+})
+
+-- // CONFIGURAÇÃO COMPLEMENTAR DO MENU (INICIALIZAÇÃO SEGURA)
+task.wait(0.2)
+Window:SelectTab(1)
+
+Fluent:Notify({
+    Title = "Vortex Script V2",
+    Content = "Menu carregado com sucesso por Daniel!",
+    Duration = 5
 })
