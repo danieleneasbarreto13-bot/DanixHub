@@ -11,6 +11,7 @@ local _G = {
     WallCheck = true, -- Ativado por padrão (mira não puxa através da parede)
     
     Esp = false,
+    Tracers = false, -- [ADICIONADO]
     EspColor = Color3.fromRGB(255, 0, 0),
     Aliados = {},
     
@@ -50,18 +51,52 @@ RunService.RenderStepped:Connect(function()
     FOVCircle.Visible = (_G.UseFOV and _G.Aimbot)
 end)
 
+-- // FUNÇÃO DE TRACERS (LINHAS) [ADICIONADO]
+local function CreateTracer(player)
+    local line = Drawing.new("Line")
+    line.Visible = false
+    line.Color = _G.EspColor
+    line.Thickness = 1
+    line.Transparency = 1
+
+    local function UpdateTracer()
+        local connection
+        connection = RunService.RenderStepped:Connect(function()
+            if _G.Tracers and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player ~= LocalPlayer then
+                local hrp = player.Character.HumanoidRootPart
+                local vector, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+
+                if onScreen and not table.find(_G.Aliados, player.Name) then
+                    line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y) 
+                    line.To = Vector2.new(vector.X, vector.Y)
+                    line.Color = _G.EspColor
+                    line.Visible = true
+                else
+                    line.Visible = false
+                end
+            else
+                line.Visible = false
+                if not player.Parent then
+                    line:Remove()
+                    connection:Disconnect()
+                end
+            end
+        end)
+    end
+    coroutine.wrap(UpdateTracer)()
+end
+
 -- // CRIANDO A JANELA PRINCIPAL (FLUENT UI)
 local Window = Fluent:CreateWindow({
     Title = "VÓRTEX SCRIPT V2",
     SubTitle = "by Daniel",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
-    Acrylic = false, -- Desativado para evitar telas pretas/brancas e melhorar o desempenho mobile
+    Acrylic = false, 
     Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.RightControl -- Tecla para ocultar/mostrar no PC
+    MinimizeKey = Enum.KeyCode.RightControl 
 })
 
--- Aguarda a janela ser completamente criada no motor do jogo antes de carregar o resto
 task.wait(0.5)
 
 -- // FUNÇÃO AUXILIAR PARA TORNAR ELEMENTOS ARRASTÁVEIS NO MOBILE
@@ -132,16 +167,12 @@ BtnStroke.Thickness = 2.5
 BtnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 BtnStroke.Parent = ToggleMenuBtn
 
--- Torna o botão de abrir/fechar arrastável
 MakeDraggable(ToggleMenuBtn)
 
--- Função do clique do botão para abrir/fechar
 local menuOpen = true
 ToggleMenuBtn.MouseButton1Click:Connect(function()
     menuOpen = not menuOpen
     Window:Minimize(not menuOpen)
-    
-    -- Efeito visual de clique profissional
     ToggleMenuBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     task.wait(0.1)
     ToggleMenuBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
@@ -181,7 +212,6 @@ Arrow.TextColor3 = _G.InterfaceColor
 Arrow.TextSize = 45
 Arrow.Font = Enum.Font.SourceSansBold
 
--- Torna o botão de pulo arrastável
 MakeDraggable(JumpBtn)
 
 JumpBtn.MouseButton1Click:Connect(function()
@@ -191,8 +221,6 @@ JumpBtn.MouseButton1Click:Connect(function()
             local humanoid = Char:FindFirstChildOfClass("Humanoid")
             humanoid.JumpPower = _G.JumpPower
             humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-            
-            -- Efeito visual de clique profissional
             JumpBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
             task.wait(0.1)
             JumpBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
@@ -200,23 +228,20 @@ JumpBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- // FUNÇÃO PROFISSIONAL PARA MUDAR CORES DA INTERFACE DO JOGO
+-- // FUNÇÃO PARA MUDAR CORES DA INTERFACE
 local function UpdateUITheme(newColor)
     _G.InterfaceColor = newColor
-    
-    -- Mudança em tempo real e de forma segura nas propriedades dos botões mobile
     if ToggleMenuBtn and BtnStroke then
         ToggleMenuBtn.TextColor3 = newColor
         BtnStroke.Color = newColor
     end
-    
     if JumpBtn and JumpStroke and Arrow then
         JumpStroke.Color = newColor
         Arrow.TextColor3 = newColor
     end
 end
 
--- // LOOP RECORRENTE PARA MANTER O WALKSPEED ATIVO (Evita resets ao morrer)
+-- // LOOP WALKSPEED
 RunService.Heartbeat:Connect(function()
     if _G.WalkSpeedEnabled then
         local Char = LocalPlayer.Character
@@ -226,27 +251,20 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- // VERIFICAÇÃO DE VISIBILIDADE (WALL CHECK)
+-- // VISIBILIDADE E AIMBOT
 local function IsVisible(targetPart, targetCharacter)
     if not _G.WallCheck then return true end
-    
     local character = LocalPlayer.Character
     if not character then return false end
-    
     local ignoreList = {character, Camera}
-    if targetCharacter then
-        table.insert(ignoreList, targetCharacter)
-    end
-    
+    if targetCharacter then table.insert(ignoreList, targetCharacter) end
     local parts = Camera:GetPartsObscuringTarget({targetPart.Position}, ignoreList)
     return #parts == 0
 end
 
--- // SELEÇÃO DO ALVO MAIS PRÓXIMO DA MIRA (DENTRO DO FOV)
 local function GetClosestPlayer()
     local closestPlayer = nil
     local shortestDistance = math.huge
-
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(_G.AimbotTarget) and player.Character:FindFirstChildOfClass("Humanoid") and player.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
             if not table.find(_G.Aliados, player.Name) then
@@ -256,7 +274,6 @@ local function GetClosestPlayer()
                     if onScreen then
                         local mousePos = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
                         local distance = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
-                        
                         if not _G.UseFOV or distance <= _G.FOVRadius then
                             if distance < shortestDistance then
                                 closestPlayer = player
@@ -271,7 +288,6 @@ local function GetClosestPlayer()
     return closestPlayer
 end
 
--- // LOOP DE EXECUÇÃO DO AIMBOT
 RunService.RenderStepped:Connect(function()
     if _G.Aimbot then
         local target = GetClosestPlayer()
@@ -286,21 +302,15 @@ end)
 local function CreateESP(player)
     local function ApplyESP()
         if player == LocalPlayer then return end
-        
         local char = player.Character or player.CharacterAdded:Wait()
         if not char then return end
-
-        if char:FindFirstChild("VortexESP") then
-            char.VortexESP:Destroy()
-        end
-
+        if char:FindFirstChild("VortexESP") then char.VortexESP:Destroy() end
         local highlight = Instance.new("Highlight")
         highlight.Name = "VortexESP"
         highlight.Parent = char
         highlight.Adornee = char
         highlight.FillTransparency = 0.6
         highlight.OutlineTransparency = 0.1
-        
         if table.find(_G.Aliados, player.Name) then
             highlight.FillColor = Color3.fromRGB(0, 0, 255)
             highlight.OutlineColor = Color3.fromRGB(0, 0, 255)
@@ -308,19 +318,20 @@ local function CreateESP(player)
             highlight.FillColor = _G.EspColor
             highlight.OutlineColor = _G.EspColor
         end
-
         highlight.Enabled = _G.Esp
     end
-
     ApplyESP()
     player.CharacterAdded:Connect(ApplyESP)
 end
 
--- Inicializa ESP para players
 for _, player in pairs(Players:GetPlayers()) do
     CreateESP(player)
+    CreateTracer(player) -- Inicializa Tracers
 end
-Players.PlayerAdded:Connect(CreateESP)
+Players.PlayerAdded:Connect(function(p)
+    CreateESP(p)
+    CreateTracer(p) -- Inicializa Tracers
+end)
 
 local function UpdateESPState()
     for _, player in pairs(Players:GetPlayers()) do
@@ -337,7 +348,7 @@ local function UpdateESPState()
     end
 end
 
--- // CRIAÇÃO DAS ABAS NA INTERFACE FLUENT (Com pequena folga para evitar gargalo)
+-- // CRIAÇÃO DAS ABAS
 local Tabs = {
     Combate = Window:AddTab({ Title = "Combate", Icon = "crosshair" }),
     Visual = Window:AddTab({ Title = "Visual & ESP", Icon = "eye" }),
@@ -349,212 +360,48 @@ task.wait(0.2)
 
 -- [ ABA: COMBATE ]
 Tabs.Combate:AddSection("Configurações do Aimbot")
-
-local AimbotToggle = Tabs.Combate:AddToggle("AimbotToggle", {Title = "Ativar Aimbot", Default = false})
-AimbotToggle:OnChanged(function(Value)
-    _G.Aimbot = Value
-end)
-
-local WallCheckToggle = Tabs.Combate:AddToggle("WallCheckToggle", {Title = "Verificar Paredes (Wall Check)", Default = true})
-WallCheckToggle:OnChanged(function(Value)
-    _G.WallCheck = Value
-end)
-
-local TargetDropdown = Tabs.Combate:AddDropdown("TargetDropdown", {
-    Title = "Parte do Corpo Alvo",
-    Values = {"Head", "HumanoidRootPart"},
-    CurrentValue = "Head",
-    Callback = function(Value)
-        _G.AimbotTarget = Value
-    end
-})
-
-local SmoothSlider = Tabs.Combate:AddSlider("SmoothSlider", {
-    Title = "Suavidade do Aimbot",
-    Description = "Ajusta o atraso da mira (Legit)",
-    Min = 1,
-    Max = 15,
-    Default = 1,
-    Rounding = 0,
-    Callback = function(Value)
-        _G.Smoothness = Value
-    end
-})
-
+Tabs.Combate:AddToggle("AimbotToggle", {Title = "Ativar Aimbot", Default = false}):OnChanged(function(v) _G.Aimbot = v end)
+Tabs.Combate:AddToggle("WallCheckToggle", {Title = "Verificar Paredes (Wall Check)", Default = true}):OnChanged(function(v) _G.WallCheck = v end)
+Tabs.Combate:AddDropdown("TargetDropdown", {Title = "Parte do Corpo Alvo", Values = {"Head", "HumanoidRootPart"}, CurrentValue = "Head", Callback = function(v) _G.AimbotTarget = v end})
+Tabs.Combate:AddSlider("SmoothSlider", {Title = "Suavidade do Aimbot", Description = "Ajusta o atraso da mira", Min = 1, Max = 15, Default = 1, Rounding = 0, Callback = function(v) _G.Smoothness = v end})
 Tabs.Combate:AddSection("Círculo de FOV")
-
-local FOVToggle = Tabs.Combate:AddToggle("FOVToggle", {Title = "Ativar Círculo de FOV", Default = true})
-FOVToggle:OnChanged(function(Value)
-    _G.UseFOV = Value
-end)
-
-local FOVSlider = Tabs.Combate:AddSlider("FOVSlider", {
-    Title = "Tamanho do FOV",
-    Min = 50,
-    Max = 600,
-    Default = 150,
-    Rounding = 0,
-    Callback = function(Value)
-        _G.FOVRadius = Value
-    end
-})
-
-local FOVColorPicker = Tabs.Combate:AddColorpicker("FOVColorPicker", {
-    Title = "Cor do FOV",
-    Default = Color3.fromRGB(255, 0, 0),
-    Callback = function(Value)
-        _G.FOVColor = Value
-    end
-})
-
-task.wait(0.1)
+Tabs.Combate:AddToggle("FOVToggle", {Title = "Ativar Círculo de FOV", Default = true}):OnChanged(function(v) _G.UseFOV = v end)
+Tabs.Combate:AddSlider("FOVSlider", {Title = "Tamanho do FOV", Min = 50, Max = 600, Default = 150, Rounding = 0, Callback = function(v) _G.FOVRadius = v end})
+Tabs.Combate:AddColorpicker("FOVColorPicker", {Title = "Cor do FOV", Default = Color3.fromRGB(255, 0, 0), Callback = function(v) _G.FOVColor = v end})
 
 -- [ ABA: VISUAL ]
 Tabs.Visual:AddSection("ESP / Wallhack")
+Tabs.Visual:AddToggle("ESPToggle", {Title = "Ativar ESP Highlight", Default = false}):OnChanged(function(v) _G.Esp = v UpdateESPState() end)
+-- NOVO BOTÃO TRACERS
+Tabs.Visual:AddToggle("TracerToggle", {Title = "Ativar ESP Tracers (Linhas)", Default = false}):OnChanged(function(v) _G.Tracers = v end)
 
-local ESPToggle = Tabs.Visual:AddToggle("ESPToggle", {Title = "Ativar ESP Highlight", Default = false})
-ESPToggle:OnChanged(function(Value)
-    _G.Esp = Value
-    UpdateESPState()
-end)
-
-local ESPColorPicker = Tabs.Visual:AddColorpicker("ESPColorPicker", {
-    Title = "Cor do ESP Inimigo",
-    Default = Color3.fromRGB(255, 0, 0),
-    Callback = function(Value)
-        _G.EspColor = Value
-        UpdateESPState()
-    end
-})
-
-task.wait(0.1)
+Tabs.Visual:AddColorpicker("ESPColorPicker", {Title = "Cor do ESP Inimigo", Default = Color3.fromRGB(255, 0, 0), Callback = function(v) _G.EspColor = v UpdateESPState() end})
 
 -- [ ABA: MOVIMENTO ]
 Tabs.Movimento:AddSection("Controles de Movimento")
-
--- WalkSpeed Toggle
-local SpeedToggle = Tabs.Movimento:AddToggle("SpeedToggle", {Title = "Ativar Velocidade (WalkSpeed)", Default = false})
-SpeedToggle:OnChanged(function(Value)
-    _G.WalkSpeedEnabled = Value
-    if not Value then
-        -- Se desligar, restaura a velocidade natural do jogador
-        local Char = LocalPlayer.Character
-        if Char and Char:FindFirstChildOfClass("Humanoid") then
-            Char:FindFirstChildOfClass("Humanoid").WalkSpeed = 16
-        end
+Tabs.Movimento:AddToggle("SpeedToggle", {Title = "Ativar Velocidade (WalkSpeed)", Default = false}):OnChanged(function(v) 
+    _G.WalkSpeedEnabled = v 
+    if not v and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 16
     end
 end)
+Tabs.Movimento:AddSlider("SpeedSlider", {Title = "Velocidade do Jogador", Min = 16, Max = 250, Default = 16, Rounding = 0, Callback = function(v) _G.WalkSpeedValue = v end})
+Tabs.Movimento:AddToggle("JumpToggle", {Title = "Botão de Pulo (Mobile)", Default = false}):OnChanged(function(v) _G.JumpEnabled = v JumpBtn.Visible = v end)
+Tabs.Movimento:AddSlider("JumpSlider", {Title = "Força do Pulo", Min = 50, Max = 200, Default = 50, Rounding = 0, Callback = function(v) _G.JumpPower = v end})
 
--- WalkSpeed Slider com Contador Integrado
-local SpeedSlider = Tabs.Movimento:AddSlider("SpeedSlider", {
-    Title = "Velocidade do Jogador",
-    Description = "Aumenta a velocidade do seu boneco",
-    Min = 16,
-    Max = 250,
-    Default = 16,
-    Rounding = 0, -- Sem números quebrados
-    Callback = function(Value)
-        _G.WalkSpeedValue = Value
-    end
-})
-
--- Botão de pulo para Mobile
-local JumpToggle = Tabs.Movimento:AddToggle("JumpToggle", {Title = "Botão de Pulo (Mobile)", Default = false})
-JumpToggle:OnChanged(function(Value)
-    _G.JumpEnabled = Value
-    JumpBtn.Visible = Value
-end)
-
-local JumpSlider = Tabs.Movimento:AddSlider("JumpSlider", {
-    Title = "Força do Pulo",
-    Min = 50,
-    Max = 200,
-    Default = 50,
-    Rounding = 0,
-    Callback = function(Value)
-        _G.JumpPower = Value
-    end
-})
-
-task.wait(0.1)
-
--- [ ABA: CONFIGS & SOCIAL ]
+-- [ ABA: OUTROS ]
 Tabs.Outros:AddSection("Sistema de Aliados")
-
-local InputAliado = Tabs.Outros:AddInput("InputAliado", {
-    Title = "Adicionar Aliado",
-    Default = "",
-    Placeholder = "Nome exato...",
-    Numeric = false,
-    Finished = true,
-    Callback = function(Text)
-        if Text ~= "" and not table.find(_G.Aliados, Text) then
-            table.insert(_G.Aliados, Text)
-            Fluent:Notify({
-                Title = "Aliado Adicionado!",
-                Content = Text .. " foi adicionado à lista.",
-                Duration = 3
-            })
-            UpdateESPState()
-        end
-    end
-})
-
-Tabs.Outros:AddButton({
-    Title = "Limpar Todos os Aliados",
-    Callback = function()
-        _G.Aliados = {}
-        Fluent:Notify({
-            Title = "Lista Limpa",
-            Content = "Todos os aliados foram removidos.",
-            Duration = 3
-        })
+Tabs.Outros:AddInput("InputAliado", {Title = "Adicionar Aliado", Placeholder = "Nome exato...", Callback = function(Text)
+    if Text ~= "" and not table.find(_G.Aliados, Text) then
+        table.insert(_G.Aliados, Text)
         UpdateESPState()
     end
-})
-
--- SEÇÃO: PERSONALIZAÇÃO DE CORES DA UI
+end})
+Tabs.Outros:AddButton({Title = "Limpar Todos os Aliados", Callback = function() _G.Aliados = {} UpdateESPState() end})
 Tabs.Outros:AddSection("Personalização do Menu")
+Tabs.Outros:AddDropdown("ThemeDropdown", {Title = "Tema Visual", Values = {"Dark", "Light", "Amethyst", "Aqua"}, CurrentValue = "Dark", Callback = function(v) Window:SetTheme(v) end})
+Tabs.Outros:AddColorpicker("UIColorsPicker", {Title = "Cor dos Botões Externos", Default = Color3.fromRGB(255, 0, 0), Callback = function(v) UpdateUITheme(v) end})
+Tabs.Outros:AddButton({Title = "Copiar Link do Discord", Callback = function() setclipboard(_G.Discord) end})
 
-local ThemeDropdown = Tabs.Outros:AddDropdown("ThemeDropdown", {
-    Title = "Tema Visual do Menu",
-    Description = "Muda a cor de fundo e detalhes principais do Menu",
-    Values = {"Dark", "Light", "Amethyst", "Aqua"},
-    CurrentValue = "Dark",
-    Callback = function(Value)
-        Window:SetTheme(Value)
-    end
-})
-
-local UIColorsPicker = Tabs.Outros:AddColorpicker("UIColorsPicker", {
-    Title = "Cor dos Botões Externos",
-    Description = "Selecione a cor de realce dos botões de tela (Atalho e Pulo)",
-    Default = Color3.fromRGB(255, 0, 0),
-    Callback = function(Value)
-        UpdateUITheme(Value)
-    end
-})
-
-Tabs.Outros:AddSection("Comunidade")
-
-Tabs.Outros:AddButton({
-    Title = "Copiar Link do Discord",
-    Callback = function()
-        setclipboard(_G.Discord)
-        Fluent:Notify({
-            Title = "Copiado!",
-            Content = "O convite do Discord foi copiado.",
-            Duration = 5
-        })
-    end
-})
-
--- // CONFIGURAÇÃO COMPLEMENTAR DO MENU (INICIALIZAÇÃO SEGURA)
-task.wait(0.2)
 Window:SelectTab(1)
-
-Fluent:Notify({
-    Title = "Vortex Script V2",
-    Content = "Menu carregado com sucesso por Daniel!",
-    Duration = 5
-})
+Fluent:Notify({Title = "Vortex Script V2", Content = "Menu carregado com sucesso!", Duration = 5})
